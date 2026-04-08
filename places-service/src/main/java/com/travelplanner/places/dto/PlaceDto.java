@@ -2,14 +2,14 @@ package com.travelplanner.places.dto;
 
 public class PlaceDto {
 
-    private String placeId;        // String — уникальный ID
-    private String name ;           // String — название места
-    private String category;       // String — тип (museum, park, cafe...)
-    private double latitude;       // double
-    private double longitude;      // double
-    private double estimatedHours;  // double — сколько времени занимает посещение
-    private String description;    // String — краткое описание
-    private Double rating ;         // Double — рейтинг (может быть null)
+    private String placeId;
+    private String name ;
+    private String category;
+    private double latitude;
+    private double longitude;
+    private double estimatedHours;
+    private String description;
+    private Double rating ;
 
     public PlaceDto(String placeId, String name, String category, double latitude, double longitude, double estimatedHours, String description, Double rating) {
         this.placeId = placeId;

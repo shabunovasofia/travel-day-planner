@@ -4,8 +4,8 @@ import java.util.List;
 
 public class PlacesSearchResponse {
 
-    private List<PlaceDto> places;     // List<PlaceDto> — список найденных мест
-    private int totalFound; // int — сколько мест найдено
+    private List<PlaceDto> places;
+    private int totalFound;
 
     public PlacesSearchResponse(List<PlaceDto> places, int totalFound) {
         this.places = places;
