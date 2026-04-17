@@ -5,6 +5,7 @@
 *.war
 *.ear
 !gradle/wrapper/gradle-wrapper.jar
+!**/gradle/wrapper/gradle-wrapper.jar
 .gitkeep
 # Папки сборки (самое важное!)
 build/
