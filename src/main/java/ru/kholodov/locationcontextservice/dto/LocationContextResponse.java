@@ -1,4 +1,4 @@
-package ru.kholodov.locationcontextservice;
+package ru.kholodov.locationcontextservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import ru.kholodov.locationcontextservice.enums.Pace;

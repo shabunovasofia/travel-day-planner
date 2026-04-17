@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.kholodov.locationcontextservice.LocationContextRequest;
-import ru.kholodov.locationcontextservice.LocationContextResponse;
+import ru.kholodov.locationcontextservice.dto.LocationContextRequest;
+import ru.kholodov.locationcontextservice.dto.LocationContextResponse;
 import ru.kholodov.locationcontextservice.service.LocationContextService;
 
 @RestController
