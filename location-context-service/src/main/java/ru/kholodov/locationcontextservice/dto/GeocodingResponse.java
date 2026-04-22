@@ -5,12 +5,12 @@ import lombok.Data;
 
 @Data
 public class GeocodingResponse {
-    @JsonProperty("lat")
-    private String lat;
+  @JsonProperty("lat")
+  private String lat;
 
-    @JsonProperty("lon")
-    private String lon;
+  @JsonProperty("lon")
+  private String lon;
 
-    @JsonProperty("display_name")
-    private String displayName;
+  @JsonProperty("display_name")
+  private String displayName;
 }
