@@ -69,3 +69,5 @@ pagefile.sys
 *.swp
 *.swo
 *~
+
+application-local.properties
