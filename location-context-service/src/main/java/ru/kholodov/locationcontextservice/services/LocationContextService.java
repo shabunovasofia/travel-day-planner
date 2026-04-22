@@ -1,9 +1,10 @@
-package ru.kholodov.locationcontextservice.service;
+package ru.kholodov.locationcontextservice.services;
 
 import org.springframework.stereotype.Service;
 import ru.kholodov.locationcontextservice.dto.LocationContextRequest;
 import ru.kholodov.locationcontextservice.dto.LocationContextResponse;
-
+import ru.kholodov.locationcontextservice.dto.Coordinates;
+import ru.kholodov.locationcontextservice.exception.AddressNotFoundException;
 
 /**
  * Сервис для обработки контекста локации.
@@ -15,10 +16,12 @@ import ru.kholodov.locationcontextservice.dto.LocationContextResponse;
  */
 @Service
 public class LocationContextService {
+    private final GeocodingService geocodingService;
 
-    public LocationContextService() {
-
+    public LocationContextService(GeocodingService geocodingService) {
+        this.geocodingService = geocodingService;
     }
+
 
 
     /**
@@ -32,20 +35,20 @@ public class LocationContextService {
      * @return объект {@link LocationContextResponse} с вычисленными данными
      */
     public LocationContextResponse getLocation(LocationContextRequest request) {
-        // 1. Геокодинг адреса (заглушка)
         String address = request.getLocation();
-        double lat = 55.7520;
-        double lon = 37.5921;
 
+        // 1. Получаем координаты от внешнего API
+        Coordinates coordinates = geocodingService.geocode(address)
+                .orElseThrow(() -> new AddressNotFoundException("Не удалось найти координаты для адреса: " + address));
+
+        // 2. Формируем ответ с реальными координатами
         return LocationContextResponse.create(
                 address,
-                lat,
-                lon,
+                coordinates.lat(),
+                coordinates.lon(),
                 request.getStartTime(),
                 request.getEndTime(),
                 request.getPace()
         );
-
-
     }
 }

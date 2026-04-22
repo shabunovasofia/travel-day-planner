@@ -12,7 +12,7 @@ import ru.kholodov.locationcontextservice.dto.LocationContextRequest;
 import ru.kholodov.locationcontextservice.dto.LocationContextResponse;
 import ru.kholodov.locationcontextservice.controller.LocationContextController;
 import ru.kholodov.locationcontextservice.enums.Pace;
-import ru.kholodov.locationcontextservice.service.LocationContextService;
+import ru.kholodov.locationcontextservice.services.LocationContextService;
 
 import java.time.LocalTime;
 
