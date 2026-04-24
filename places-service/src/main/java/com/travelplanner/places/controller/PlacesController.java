@@ -12,16 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/places")
 public class PlacesController {
 
-    private final PlacesService placesService;
+  private final PlacesService placesService;
 
-    public PlacesController(PlacesService placesService) {
-        this.placesService = placesService;
-    }
+  public PlacesController(PlacesService placesService) {
+    this.placesService = placesService;
+  }
 
-    @PostMapping("/search")
-    public PlacesSearchResponse searchResponse (@RequestBody PlacesSearchRequest request){
-        return placesService.search(request);
-    }
+  @PostMapping("/search")
+  public PlacesSearchResponse searchResponse(@RequestBody PlacesSearchRequest request) {
+    return placesService.search(request);
+  }
 }
-
-

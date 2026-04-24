@@ -5,44 +5,34 @@
 *.war
 *.ear
 !gradle/wrapper/gradle-wrapper.jar
+!**/gradle/wrapper/gradle-wrapper.jar
 .gitkeep
 # Папки сборки (самое важное!)
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
-
 # Локальные настройки Gradle
 .gradle/
 gradle-app.setting
 !gradle-wrapper.properties
-
 # Лог файлы
 *.log
-
 ### IntelliJ IDEA ###
-# Вся папка .idea, кроме настроек, которые могут быть полезны команде (опционально)
 .idea/
-# Если хотите сохранить некоторые настройки, раскомментируйте строки ниже и закомментируйте .idea/ выше:
 #.idea/modules.xml
 #.idea/vcs.xml
 #.idea/codeStyles/
 !.idea/runConfigurations/
-
-# Файлы пользовательских настроек IDE
 *.iws
 *.iml
 *.ipr
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
-
 ### macOS ###
-# Системные файлы мусора (те самые .DS_Store)
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# Папки, создаваемые Finder
 Icon
 ._*
 .DocumentRevisions-V100
@@ -52,22 +42,16 @@ Icon
 .Trashes
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
-
-# Файлы, создаемые приложениями Apple
 .AppleDB
 .AppleDesktop
 Network Trash Folder
 Temporary Items
 .apdisk
-
 ### Общие системные файлы ###
-# Файлы подкачки Windows
 pagefile.sys
-# Временные файлы
 *.tmp
 *.temp
 *.swp
 *.swo
 *~
-
 application-local.properties
