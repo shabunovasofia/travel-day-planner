@@ -135,7 +135,6 @@ class PlacesControllerTest {
         .andExpect(jsonPath("$.places[1].category").value("park"));
   }
 
-  // ❌ ДОБАВИТЬ — запрос без categories (сервис подставляет дефолтные)
   @Test
   void searchWithoutCategoriesShouldReturnOk() throws Exception {
     when(placesService.search(any())).thenReturn(new PlacesSearchResponse(List.of(), 0));
