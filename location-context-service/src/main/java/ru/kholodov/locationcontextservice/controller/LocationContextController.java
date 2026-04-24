@@ -47,15 +47,7 @@ public class LocationContextController {
   @PostMapping("/analyze")
   public ResponseEntity<?> getLocation(@Valid @RequestBody LocationContextRequest request) {
     logger.info("Вызван метод getLocation");
-    try {
-      LocationContextResponse response = locationContextService.getLocation(request);
-      return ResponseEntity.ok(response);
-    } catch (AddressNotFoundException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-    } catch (Exception e) {
-      logger.error("Внутренняя ошибка сервера", e);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Произошла ошибка при обработке запроса");
-    }
+    LocationContextResponse response = locationContextService.getLocation(request);
+    return ResponseEntity.ok(response);
   }
 }

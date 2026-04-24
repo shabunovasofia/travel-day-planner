@@ -35,7 +35,7 @@ class LocationContextServiceTest {
     request.setEndTime(LocalTime.of(18, 0));
     request.setPace(Pace.FAST);
 
-    // Заглушка для геокодера: вернуть координаты Тверской (пример)
+    // Заглушка для геокодера:
     when(geocodingService.geocode("Тверская, Москва"))
         .thenReturn(Optional.of(new Coordinates(55.757, 37.615)));
 
