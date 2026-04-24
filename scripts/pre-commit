@@ -1,6 +1,13 @@
 #!/bin/sh
+# Переходим в корень репозитория (там где лежат все сервисы)
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
 cd location-context-service && ./gradlew test --quiet || exit 1
-cd ../places-service && ./gradlew test --quiet || exit 1
-cd ../planner-service && ./gradlew test --quiet || exit 1
-echo "Все тесты прошли"
+cd "$REPO_ROOT"
+cd places-service && ./gradlew test --quiet || exit 1
+cd "$REPO_ROOT"
+cd planner-service && ./gradlew test --quiet || exit 1
+
+echo "✅ Все тесты прошли"
 exit 0
