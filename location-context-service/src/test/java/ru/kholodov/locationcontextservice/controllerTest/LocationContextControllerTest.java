@@ -38,7 +38,7 @@ class LocationContextControllerTest {
 
     LocationContextResponse mockResponse =
         LocationContextResponse.create(
-            "Арбат", 55.7520, 37.5921, LocalTime.of(10, 0), LocalTime.of(16, 0), Pace.MEDIUM);
+            "Арбат", 55.7520, 37.5921, 3000, LocalTime.of(10, 0), LocalTime.of(16, 0), Pace.MEDIUM);
 
     when(service.getLocation(any(LocationContextRequest.class))).thenReturn(mockResponse);
 

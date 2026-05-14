@@ -68,13 +68,8 @@ public class GeocodingService {
       HttpEntity<Void> entity = new HttpEntity<>(headers);
 
       ResponseEntity<GeocodingResponse[]> response =
-          restTemplate.exchange(
-              uri, // <-- и сюда URI
-              HttpMethod.GET,
-              entity,
-              GeocodingResponse[].class);
+          restTemplate.exchange(uri, HttpMethod.GET, entity, GeocodingResponse[].class);
 
-      // 5. Обрабатываем ответ
       if (response.getStatusCode() == HttpStatus.OK
           && response.getBody() != null
           && response.getBody().length > 0) {
