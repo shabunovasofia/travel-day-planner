@@ -2,6 +2,8 @@ package ru.kholodov.locationcontextservice.serviceTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalTime;
@@ -17,12 +19,14 @@ import ru.kholodov.locationcontextservice.dto.LocationContextResponse;
 import ru.kholodov.locationcontextservice.enums.Pace;
 import ru.kholodov.locationcontextservice.exception.AddressNotFoundException;
 import ru.kholodov.locationcontextservice.services.GeocodingService;
+import ru.kholodov.locationcontextservice.services.IsochroneService;
 import ru.kholodov.locationcontextservice.services.LocationContextService;
 
 @ExtendWith(MockitoExtension.class)
 class LocationContextServiceTest {
 
   @Mock private GeocodingService geocodingService;
+  @Mock private IsochroneService isochroneService; // <-- добавлен
 
   @InjectMocks private LocationContextService service;
 
@@ -35,9 +39,13 @@ class LocationContextServiceTest {
     request.setEndTime(LocalTime.of(18, 0));
     request.setPace(Pace.FAST);
 
-    // Заглушка для геокодера:
+    // Мок геокодера
     when(geocodingService.geocode("Тверская, Москва"))
         .thenReturn(Optional.of(new Coordinates(55.757, 37.615)));
+
+    // Мок изохроны – пусть возвращает конкретный радиус
+    when(isochroneService.calculateRadius(any(Coordinates.class), eq(6.0), eq(Pace.FAST)))
+        .thenReturn(Optional.of(12345.0));
 
     // when
     LocationContextResponse response = service.getLocation(request);
@@ -49,7 +57,7 @@ class LocationContextServiceTest {
     assertThat(response.startTime()).isEqualTo(LocalTime.of(12, 0));
     assertThat(response.endTime()).isEqualTo(LocalTime.of(18, 0));
     assertThat(response.pace()).isEqualTo(Pace.FAST);
-    assertThat(response.radiusMeters()).isEqualTo(5000);
+    assertThat(response.radiusMeters()).isEqualTo(12345); // из мока
     assertThat(response.availableHours()).isEqualTo(6.0);
   }
 
