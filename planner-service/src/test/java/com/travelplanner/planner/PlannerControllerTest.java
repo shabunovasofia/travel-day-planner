@@ -53,6 +53,73 @@ class PlannerControllerTest {
 				.andExpect(jsonPath("$.items").isArray())
 				.andExpect(jsonPath("$.items.length()").value(1))
 				.andExpect(jsonPath("$.totalPlaces").value(1))
-				.andExpect(jsonPath("$.warnings").isArray());
+				.andExpect(jsonPath("$.warnings").isArray())
+				.andExpect(jsonPath("$.evaluatedOrderings").value(1));
+	}
+
+	@Test
+	void buildShouldReturn400WhenPlacesEmpty() throws Exception {
+		String body = """
+				{
+				  "startTime": "10:00",
+				  "endTime": "18:00",
+				  "places": []
+				}
+				""";
+		mockMvc.perform(post("/api/v1/plan/build")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(body))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void buildShouldWarnWhenPlaceDoesNotFit() throws Exception {
+		String body = """
+				{
+				  "startTime": "10:00",
+				  "endTime": "11:00",
+				  "places": [{
+				    "placeId": "p1",
+				    "name": "Третьяковка",
+				    "category": "gallery",
+				    "latitude": 55.74,
+				    "longitude": 37.62,
+				    "estimatedHours": 5.0,
+				    "description": "",
+				    "rating": 4.8
+				  }]
+				}
+				""";
+		mockMvc.perform(post("/api/v1/plan/build")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(body))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.items").isEmpty())
+				.andExpect(jsonPath("$.warnings").isNotEmpty())
+				.andExpect(jsonPath("$.evaluatedOrderings").value(1));
+	}
+
+	@Test
+	void buildShouldReturn400WhenTimeFormatInvalid() throws Exception {
+		String body = """
+				{
+				  "startTime": "утро",
+				  "endTime": "вечер",
+				  "places": [{
+				    "placeId": "p1",
+				    "name": "Место",
+				    "category": "park",
+				    "latitude": 55.74,
+				    "longitude": 37.62,
+				    "estimatedHours": 1.0,
+				    "description": "",
+				    "rating": 4.0
+				  }]
+				}
+				""";
+		mockMvc.perform(post("/api/v1/plan/build")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(body))
+				.andExpect(status().isBadRequest());
 	}
 }
