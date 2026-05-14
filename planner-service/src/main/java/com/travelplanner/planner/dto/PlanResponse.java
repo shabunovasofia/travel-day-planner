@@ -6,6 +6,7 @@ public record PlanResponse(
 		List<PlanItem> items,
 		int totalPlaces,
 		double totalHours,
-		List<String> warnings
+		List<String> warnings,
+		int evaluatedOrderings
 ) {
 }
