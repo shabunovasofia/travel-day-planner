@@ -1,12 +1,19 @@
 package com.travelplanner.places.dto;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 
 public class PlacesSearchRequest {
   private double latitude;
   private double longitude;
+
+  @Min(value = 1, message = "radiusMeters must be positive")
   private int radiusMeters;
+
+  @Positive(message = "availableHours must be positive")
   private double availableHours;
+
   private List<String> categories;
 
   public PlacesSearchRequest() {
