@@ -34,8 +34,16 @@ class PlacesControllerTest {
             post("/api/v1/places/search")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"latitude\":55.75,\"longitude\":37.61,"
-                        + "\"radiusMeters\":3000,\"availableHours\":6.0}"))
+                    """
+                                    {
+                                      "latitude": 55.75,
+                                      "longitude": 37.61,
+                                      "radiusMeters": 3000,
+                                      "availableHours": 6.0,
+                                      "startTime": "10:00",
+                                      "endTime": "16:00"
+                                    }
+                                    """))
         .andExpect(status().isOk());
   }
 
@@ -43,7 +51,17 @@ class PlacesControllerTest {
   void searchShouldReturnPlaces() throws Exception {
     PlaceDto place =
         new PlaceDto(
-            "osm_museum_0", "Третьяковская галерея", "museum", 55.7415, 37.6208, 2.5, 4.5, "", "");
+            "osm_museum_0",
+            "Третьяковская галерея",
+            "museum",
+            55.7415,
+            37.6208,
+            2.5,
+            4.5,
+            "",
+            "",
+            "Mo-Su 10:00-18:00; PH off",
+            false);
 
     when(placesService.search(any())).thenReturn(new PlacesSearchResponse(List.of(place), 1));
 
@@ -53,20 +71,24 @@ class PlacesControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                                {
-                                  "latitude": 55.75,
-                                  "longitude": 37.61,
-                                  "radiusMeters": 3000,
-                                  "availableHours": 6.0,
-                                  "categories": ["museum"]
-                                }
-                                """))
+                                    {
+                                      "latitude": 55.75,
+                                      "longitude": 37.61,
+                                      "radiusMeters": 3000,
+                                      "availableHours": 6.0,
+                                      "startTime": "10:00",
+                                      "endTime": "16:00",
+                                      "categories": ["museum"]
+                                    }
+                                    """))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.totalFound").value(1))
         .andExpect(jsonPath("$.places").isArray())
         .andExpect(jsonPath("$.places[0].name").value("Третьяковская галерея"))
         .andExpect(jsonPath("$.places[0].category").value("museum"))
-        .andExpect(jsonPath("$.places[0].estimatedHours").value(2.5));
+        .andExpect(jsonPath("$.places[0].estimatedHours").value(2.5))
+        .andExpect(jsonPath("$.places[0].openingHoursText").value("Mo-Su 10:00-18:00; PH off"))
+        .andExpect(jsonPath("$.places[0].scheduleUnknown").value(false));
   }
 
   @Test
@@ -79,9 +101,11 @@ class PlacesControllerTest {
             55.7415,
             37.6208,
             2.5,
-            4.5, // rating
-            "Лаврушинский переулок, 10, Москва", // address
-            "Знаменитый музей русского искусства"); // description
+            4.5,
+            "Лаврушинский переулок, 10, Москва",
+            "Знаменитый музей русского искусства",
+            "Mo-Su 10:00-18:00; PH off",
+            false);
 
     when(placesService.search(any())).thenReturn(new PlacesSearchResponse(List.of(place), 1));
 
@@ -91,14 +115,16 @@ class PlacesControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                                {
-                                  "latitude": 55.75,
-                                  "longitude": 37.61,
-                                  "radiusMeters": 3000,
-                                  "availableHours": 6.0,
-                                  "categories": ["museum"]
-                                }
-                                """))
+                                    {
+                                      "latitude": 55.75,
+                                      "longitude": 37.61,
+                                      "radiusMeters": 3000,
+                                      "availableHours": 6.0,
+                                      "startTime": "10:00",
+                                      "endTime": "16:00",
+                                      "categories": ["museum"]
+                                    }
+                                    """))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.places[0].rating").value(4.5))
         .andExpect(jsonPath("$.places[0].description").isNotEmpty())
@@ -108,9 +134,22 @@ class PlacesControllerTest {
   @Test
   void searchShouldReturnMultiplePlacesFromDifferentCategories() throws Exception {
     PlaceDto museum =
-        new PlaceDto("otm_museum_0", "Эрмитаж", "museum", 59.94, 30.31, 2.5, 5.0, "", "");
+        new PlaceDto(
+            "otm_museum_0",
+            "Эрмитаж",
+            "museum",
+            59.94,
+            30.31,
+            2.5,
+            5.0,
+            "",
+            "",
+            "Mo-Su 11:00-20:00",
+            false);
+
     PlaceDto park =
-        new PlaceDto("otm_park_0", "Летний сад", "park", 59.94, 30.33, 1.5, 4.0, "", "");
+        new PlaceDto(
+            "otm_park_0", "Летний сад", "park", 59.94, 30.33, 1.5, 4.0, "", "", null, true);
 
     when(placesService.search(any()))
         .thenReturn(new PlacesSearchResponse(List.of(museum, park), 2));
@@ -121,14 +160,16 @@ class PlacesControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                                {
-                                  "latitude": 59.94,
-                                  "longitude": 30.31,
-                                  "radiusMeters": 3000,
-                                  "availableHours": 6.0,
-                                  "categories": ["museum", "park"]
-                                }
-                                """))
+                                    {
+                                      "latitude": 59.94,
+                                      "longitude": 30.31,
+                                      "radiusMeters": 3000,
+                                      "availableHours": 6.0,
+                                      "startTime": "10:00",
+                                      "endTime": "16:00",
+                                      "categories": ["museum", "park"]
+                                    }
+                                    """))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.totalFound").value(2))
         .andExpect(jsonPath("$.places[0].category").value("museum"))
@@ -145,13 +186,15 @@ class PlacesControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                                {
-                                  "latitude": 55.75,
-                                  "longitude": 37.61,
-                                  "radiusMeters": 3000,
-                                  "availableHours": 6.0
-                                }
-                                """))
+                                    {
+                                      "latitude": 55.75,
+                                      "longitude": 37.61,
+                                      "radiusMeters": 3000,
+                                      "availableHours": 6.0,
+                                      "startTime": "10:00",
+                                      "endTime": "16:00"
+                                    }
+                                    """))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.places").isArray());
   }

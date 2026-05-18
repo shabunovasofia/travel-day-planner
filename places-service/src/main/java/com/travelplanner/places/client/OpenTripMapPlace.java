@@ -7,4 +7,6 @@ public record OpenTripMapPlace(
     double longitude,
     double rating,
     String address,
-    String description) {}
+    String description,
+    String openingHoursText,
+    boolean scheduleUnknown) {}

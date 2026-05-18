@@ -11,7 +11,7 @@ public class CategoryMapper {
           "cafe", "cafes",
           "restaurant", "restaurants");
 
-  public static String toKinds(String category) {
+  public static String toKinds(final String category) {
     return CATEGORY_TO_KINDS.getOrDefault(category, "interesting_places");
   }
 }
