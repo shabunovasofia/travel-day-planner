@@ -4,18 +4,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 @Component
 public class OpenTripMapClient {
+
   private static final String BASE_URL = "https://api.opentripmap.com/0.1/en/places";
-  private static final String API_KEY = "5ae2e3f221c38a28845f05b6cb8ed279c51bf2d1a4a2a453d7693f05";
+  private static final String OSM_BASE_URL = "https://api.openstreetmap.org/api/0.6";
+
+  @Value("${opentripmap.api-key}")
+  private String API_KEY;
+
   private static final int LIMIT = 10;
 
   private final RestTemplate restTemplate = new RestTemplate();
 
-  public List<OpenTripMapPlace> findPlaces(double lat, double lon, int radius, String kinds) {
+  public List<OpenTripMapPlace> findPlaces(
+      final double lat, final double lon, final int radius, final String kinds) {
     String url =
         String.format(
             Locale.US,
@@ -51,10 +58,12 @@ public class OpenTripMapClient {
     return result;
   }
 
-  private OpenTripMapPlace fetchDetails(String xid, String name, double lat, double lon) {
+  private OpenTripMapPlace fetchDetails(
+      final String xid, final String name, final double lat, final double lon) {
     try {
       String url = String.format("%s/xid/%s?apikey=%s", BASE_URL, xid, API_KEY);
       Map details = restTemplate.getForObject(url, Map.class);
+      String osmRef = details != null ? (String) details.get("osm") : null;
 
       String description = "";
       Map info = (Map) details.get("info");
@@ -83,7 +92,68 @@ public class OpenTripMapClient {
       Object rateObj = details.get("rate");
       double rating = rateObj != null ? Double.parseDouble(rateObj.toString()) : 0.0;
 
-      return new OpenTripMapPlace(xid, name, lat, lon, rating, address, description);
+      String openingHoursText = null;
+      boolean scheduleUnknown = true;
+
+      if (info != null) {
+        Object hours = info.get("opening_hours");
+        if (hours != null) {
+          openingHoursText = hours.toString();
+          scheduleUnknown = false;
+        }
+      }
+
+      if (openingHoursText == null || openingHoursText.isBlank()) {
+        openingHoursText = loadOpeningHoursFromOsm(osmRef);
+        if (openingHoursText != null && !openingHoursText.isBlank()) {
+          scheduleUnknown = false;
+        }
+      }
+      return new OpenTripMapPlace(
+          xid, name, lat, lon, rating, address, description, openingHoursText, scheduleUnknown);
+
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  private String loadOpeningHoursFromOsm(final String osmRef) {
+    if (osmRef == null || osmRef.isBlank()) {
+      return null;
+    }
+
+    try {
+      String[] parts = osmRef.split("/");
+      if (parts.length != 2) {
+        return null;
+      }
+
+      String type = parts[0];
+      String id = parts[1];
+
+      if (!type.equals("node") && !type.equals("way") && !type.equals("relation")) {
+        return null;
+      }
+
+      String url = String.format("%s/%s/%s.json", OSM_BASE_URL, type, id);
+      Map response = restTemplate.getForObject(url, Map.class);
+      if (response == null) {
+        return null;
+      }
+
+      List<Map> elements = (List<Map>) response.get("elements");
+      if (elements == null || elements.isEmpty()) {
+        return null;
+      }
+
+      Map firstElement = elements.get(0);
+      Map tags = (Map) firstElement.get("tags");
+      if (tags == null) {
+        return null;
+      }
+
+      Object openingHours = tags.get("opening_hours");
+      return openingHours != null ? openingHours.toString() : null;
 
     } catch (Exception e) {
       return null;

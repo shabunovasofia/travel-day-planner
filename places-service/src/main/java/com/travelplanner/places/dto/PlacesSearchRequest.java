@@ -7,7 +7,7 @@ public class PlacesSearchRequest {
   private double longitude;
   private int radiusMeters;
   private double availableHours;
-  private List<String> categories; // ["museum", "park", "cafe", "gallery"]
+  private List<String> categories;
 
   public PlacesSearchRequest() {
     latitude = 0.0;
@@ -20,36 +20,36 @@ public class PlacesSearchRequest {
     return latitude;
   }
 
-  public double getLongitude() {
-    return longitude;
-  }
-
-  public int getRadiusMeters() {
-    return radiusMeters;
-  }
-
-  public double getAvailableHours() {
-    return availableHours;
-  }
-
-  public List<String> getCategories() {
-    return categories;
-  }
-
   public void setLatitude(double latitude) {
     this.latitude = latitude;
+  }
+
+  public double getLongitude() {
+    return longitude;
   }
 
   public void setLongitude(double longitude) {
     this.longitude = longitude;
   }
 
+  public int getRadiusMeters() {
+    return radiusMeters;
+  }
+
   public void setRadiusMeters(int radiusMeters) {
     this.radiusMeters = radiusMeters;
   }
 
+  public double getAvailableHours() {
+    return availableHours;
+  }
+
   public void setAvailableHours(double availableHours) {
     this.availableHours = availableHours;
+  }
+
+  public List<String> getCategories() {
+    return categories;
   }
 
   public void setCategories(List<String> categories) {
