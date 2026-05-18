@@ -198,4 +198,22 @@ class PlacesControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.places").isArray());
   }
+
+  @Test
+  void searchWithZeroRadiusShouldReturn400() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/v1/places/search")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                                    {
+                                      "latitude": 55.75,
+                                      "longitude": 37.61,
+                                      "radiusMeters": 0,
+                                      "availableHours": 6.0
+                                    }
+                                    """))
+        .andExpect(status().isBadRequest());
+  }
 }
