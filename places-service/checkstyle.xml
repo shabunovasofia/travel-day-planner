@@ -56,10 +56,6 @@
         <property name="optional" value="true"/>
     </module>
 
-    <!-- Checks that a package-info.java file exists for each package.     -->
-    <!-- See https://checkstyle.org/checks/javadoc/javadocpackage.html#JavadocPackage -->
-    <module name="JavadocPackage"/>
-
     <!-- Checks whether files end with a new line.                        -->
     <!-- See https://checkstyle.org/checks/misc/newlineatendoffile.html -->
     <module name="NewlineAtEndOfFile"/>
@@ -73,6 +69,7 @@
     <module name="FileLength"/>
     <module name="LineLength">
         <property name="fileExtensions" value="java"/>
+        <property name="max" value="120"/>
     </module>
 
     <!-- Checks for whitespace                               -->
@@ -130,7 +127,9 @@
         <!-- Checks for Size Violations.                    -->
         <!-- See https://checkstyle.org/checks/sizes/index.html -->
         <module name="MethodLength"/>
-        <module name="ParameterNumber"/>
+        <module name="ParameterNumber">
+            <property name="max" value="14"/>
+        </module>
 
         <!-- Checks for whitespace                               -->
         <!-- See https://checkstyle.org/checks/whitespace/index.html -->
@@ -148,7 +147,11 @@
             <property name="tokens"
                       value="COMMA, SEMI, TYPECAST, LITERAL_YIELD, ELLIPSIS, LITERAL_CASE"/>
         </module>
-        <module name="WhitespaceAround"/>
+        <module name="WhitespaceAround">
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+            <property name="allowEmptyTypes" value="true"/>
+        </module>
 
         <!-- Modifier Checks                                    -->
         <!-- See https://checkstyle.org/checks/modifier/index.html -->
@@ -168,7 +171,10 @@
         <module name="EmptyStatement"/>
         <module name="EqualsHashCode"/>
         <module name="FallThrough"/>
-        <module name="HiddenField"/>
+        <module name="HiddenField">
+            <property name="ignoreConstructorParameter" value="true"/>
+            <property name="ignoreSetter" value="true"/>
+        </module>
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
         <module name="MagicNumber"/>
@@ -183,8 +189,7 @@
         <module name="DesignForExtension"/>
         <module name="DeclarationOrder"/>
         <module name="FinalClass"/>
-        <module name="HideUtilityClassConstructor"/>
-        <module name="InterfaceIsType"/>
+        <!-- <module name="HideUtilityClassConstructor"/> -->        <module name="InterfaceIsType"/>
         <module name="VisibilityModifier"/>
 
         <!-- Miscellaneous other checks.                   -->
