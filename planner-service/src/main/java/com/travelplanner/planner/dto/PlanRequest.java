@@ -1,12 +1,24 @@
 package com.travelplanner.planner.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PlanRequest {
 
 	private String startTime;
 	private String endTime;
 	private List<PlaceDto> places;
+
+	/** Адрес для вызова location-context-service (опционально, ЛР3). */
+	private String walkLocation;
+
+	/** SLOW, MEDIUM, FAST — по умолчанию MEDIUM. */
+	private String walkPace;
+
+	/** Категории для поиска в places-service после анализа контекста. */
+	private List<String> discoverCategories;
 
 	public String getStartTime() {
 		return startTime;
@@ -30,5 +42,29 @@ public class PlanRequest {
 
 	public void setPlaces(List<PlaceDto> places) {
 		this.places = places;
+	}
+
+	public String getWalkLocation() {
+		return walkLocation;
+	}
+
+	public void setWalkLocation(String walkLocation) {
+		this.walkLocation = walkLocation;
+	}
+
+	public String getWalkPace() {
+		return walkPace;
+	}
+
+	public void setWalkPace(String walkPace) {
+		this.walkPace = walkPace;
+	}
+
+	public List<String> getDiscoverCategories() {
+		return discoverCategories;
+	}
+
+	public void setDiscoverCategories(List<String> discoverCategories) {
+		this.discoverCategories = discoverCategories;
 	}
 }
