@@ -15,14 +15,39 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PlacesService {
+  /** Категории по умолчанию, если в запросе не указаны. */
   private static final List<String> DEFAULT_CATEGORIES = List.of("museum", "park", "cafe");
 
+  /** Оценочное время посещения музея или галереи в часах. */
+  private static final double HOURS_MUSEUM = 2.5;
+
+  /** Оценочное время посещения парка в часах. */
+  private static final double HOURS_PARK = 1.5;
+
+  /** Оценочное время посещения кафе или ресторана в часах. */
+  private static final double HOURS_CAFE = 1.0;
+
+  /** Оценочное время посещения по умолчанию в часах. */
+  private static final double HOURS_DEFAULT = 1.5;
+
+  /** Клиент OpenTripMap API. */
   private final OpenTripMapClient openTripMapClient;
 
+  /**
+   * Конструктор с зависимостью.
+   *
+   * @param openTripMapClient клиент OpenTripMap
+   */
   public PlacesService(final OpenTripMapClient openTripMapClient) {
     this.openTripMapClient = openTripMapClient;
   }
 
+  /**
+   * Ищет места по параметрам запроса.
+   *
+   * @param request параметры поиска
+   * @return список найденных мест
+   */
   public PlacesSearchResponse search(final PlacesSearchRequest request) {
     List<String> categories = resolveCategories(request.getCategories());
     List<PlaceDto> candidates = new ArrayList<>();
@@ -99,10 +124,10 @@ public class PlacesService {
 
   private double estimatedHoursByCategory(final String category) {
     return switch (category) {
-      case "museum", "gallery" -> 2.5;
-      case "park" -> 1.5;
-      case "cafe", "restaurant" -> 1.0;
-      default -> 1.5;
+      case "museum", "gallery" -> HOURS_MUSEUM;
+      case "park" -> HOURS_PARK;
+      case "cafe", "restaurant" -> HOURS_CAFE;
+      default -> HOURS_DEFAULT;
     };
   }
 }
