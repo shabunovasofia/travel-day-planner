@@ -45,6 +45,7 @@ REST API для планирования дня в городе. Пользов�
 | Сервис                                             | Используется в | Назначение |
 |----------------------------------------------------|---------------|------------|
 | [OpenTripMap API](https://opentripmap.io)          | places-service | Поиск мест по координатам и категориям |
+| [OpenStreetMap API](https://openstreetmap.org)     | places-service | Загрузка графика работы мест |
 | [LocationIQ API](https://locationiq.com)           | location-context-service | Геокодинг адреса в координаты |
 | [ORS Isochrones API](https://openrouteservice.org) | location-context-service | Расчёт радиуса пешеходной доступности |
 
