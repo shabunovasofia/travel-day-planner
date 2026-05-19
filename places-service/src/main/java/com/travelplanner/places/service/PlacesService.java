@@ -61,11 +61,7 @@ public class PlacesService {
               request.getLatitude(), request.getLongitude(), request.getRadiusMeters(), osmFilter);
 
       for (OpenTripMapPlace place : foundPlaces) {
-        PlaceDto dto = mapToPlaceDto(place, category, estimatedHours);
-
-        if (isSuitableForAvailableTime(dto, request.getAvailableHours())) {
-          candidates.add(dto);
-        }
+        candidates.add(mapToPlaceDto(place, category, estimatedHours));
       }
     }
 
@@ -100,10 +96,6 @@ public class PlacesService {
 
   private String buildPlaceId(final OpenTripMapPlace place, final String category) {
     return "osm_" + category + "_" + place.xid();
-  }
-
-  private boolean isSuitableForAvailableTime(final PlaceDto place, final double availableHours) {
-    return place.getEstimatedHours() <= availableHours;
   }
 
   private List<PlaceDto> removeDuplicates(final List<PlaceDto> places) {
