@@ -54,7 +54,7 @@ public class IsochroneService {
      * @return Optional со средним радиусом в метрах, либо пустой Optional при ошибке
      */
     public Optional<Double> calculateRadius(Coordinates center, double availableHours, Pace pace) {
-        double standardSpeed = 5.0; // фиксированная скорость ORS
+        double standardSpeed = 5.0;
         double paceSpeed =
                 switch (pace) {
                     case SLOW -> 3.5;
@@ -118,7 +118,6 @@ public class IsochroneService {
 
                 String type = geometry.get("type").asText();
                 if ("Polygon".equals(type)) {
-                    // Внешнее кольцо — массив точек [lon, lat]
                     JsonNode outerRing = coordinates.get(0);
                     if (outerRing != null) {
                         for (JsonNode point : outerRing) {

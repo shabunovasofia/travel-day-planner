@@ -43,7 +43,7 @@ class LocationContextServiceTest {
     when(geocodingService.geocode("Тверская, Москва"))
         .thenReturn(Optional.of(new Coordinates(55.757, 37.615)));
 
-    // Мок изохроны – пусть возвращает конкретный радиус
+    // Мок изохроны
     when(isochroneService.calculateRadius(any(Coordinates.class), eq(6.0), eq(Pace.FAST)))
         .thenReturn(Optional.of(12345.0));
 

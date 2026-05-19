@@ -71,7 +71,7 @@ public class LocationContextService {
                                     double maxDistanceKm = availableHours * DEFAULT_WALKING_SPEED_KMH / 2.0;
                                     int fallbackRadius = (int) (maxDistanceKm * 1000);
                                     logger.warn(
-                                            "Изохрона недоступна. Использую fallback-радиус: {} м", fallbackRadius);
+                                            "Изохрона недоступна. fallback-радиус: {} м", fallbackRadius);
                                     return fallbackRadius;
                                 });
 
