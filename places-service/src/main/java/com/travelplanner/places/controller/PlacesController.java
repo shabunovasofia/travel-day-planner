@@ -4,6 +4,8 @@ import com.travelplanner.places.dto.PlacesSearchRequest;
 import com.travelplanner.places.dto.PlacesSearchResponse;
 import com.travelplanner.places.service.PlacesService;
 import jakarta.validation.Valid;
+import java.util.Map;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,7 +22,9 @@ public class PlacesController {
   }
 
   @PostMapping("/search")
-  public PlacesSearchResponse searchResponse(@Valid @RequestBody PlacesSearchRequest request) {
-    return placesService.search(request);
+  public ResponseEntity<Map<String, Object>> searchResponse(
+      @Valid @RequestBody PlacesSearchRequest request) {
+    PlacesSearchResponse response = placesService.search(request);
+    return ResponseEntity.ok(Map.of("data", response));
   }
 }

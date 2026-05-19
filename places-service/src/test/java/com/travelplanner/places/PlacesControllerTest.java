@@ -82,13 +82,13 @@ class PlacesControllerTest {
                                     }
                                     """))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.totalFound").value(1))
-        .andExpect(jsonPath("$.places").isArray())
-        .andExpect(jsonPath("$.places[0].name").value("Третьяковская галерея"))
-        .andExpect(jsonPath("$.places[0].category").value("museum"))
-        .andExpect(jsonPath("$.places[0].estimatedHours").value(2.5))
-        .andExpect(jsonPath("$.places[0].openingHoursText").value("Mo-Su 10:00-18:00; PH off"))
-        .andExpect(jsonPath("$.places[0].scheduleUnknown").value(false));
+        .andExpect(jsonPath("$.data.totalFound").value(1))
+        .andExpect(jsonPath("$.data.places").isArray())
+        .andExpect(jsonPath("$.data.places[0].name").value("Третьяковская галерея"))
+        .andExpect(jsonPath("$.data.places[0].category").value("museum"))
+        .andExpect(jsonPath("$.data.places[0].estimatedHours").value(2.5))
+        .andExpect(jsonPath("$.data.places[0].openingHoursText").value("Mo-Su 10:00-18:00; PH off"))
+        .andExpect(jsonPath("$.data.places[0].scheduleUnknown").value(false));
   }
 
   @Test
@@ -126,9 +126,9 @@ class PlacesControllerTest {
                                     }
                                     """))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.places[0].rating").value(4.5))
-        .andExpect(jsonPath("$.places[0].description").isNotEmpty())
-        .andExpect(jsonPath("$.places[0].address").isNotEmpty());
+        .andExpect(jsonPath("$.data.places[0].rating").value(4.5))
+        .andExpect(jsonPath("$.data.places[0].description").isNotEmpty())
+        .andExpect(jsonPath("$.data.places[0].address").isNotEmpty());
   }
 
   @Test
@@ -171,9 +171,9 @@ class PlacesControllerTest {
                                     }
                                     """))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.totalFound").value(2))
-        .andExpect(jsonPath("$.places[0].category").value("museum"))
-        .andExpect(jsonPath("$.places[1].category").value("park"));
+        .andExpect(jsonPath("$.data.totalFound").value(2))
+        .andExpect(jsonPath("$.data.places[0].category").value("museum"))
+        .andExpect(jsonPath("$.data.places[1].category").value("park"));
   }
 
   @Test
@@ -196,7 +196,7 @@ class PlacesControllerTest {
                                     }
                                     """))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.places").isArray());
+        .andExpect(jsonPath("$.data.places").isArray());
   }
 
   @Test
