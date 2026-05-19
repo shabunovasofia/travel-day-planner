@@ -25,27 +25,27 @@ import ru.kholodov.locationcontextservice.services.LocationContextService;
 @RequestMapping("/api/v1/context")
 public class LocationContextController {
 
-  private static final Logger logger = LoggerFactory.getLogger(LocationContextController.class);
-  private final LocationContextService locationContextService;
+    private static final Logger logger = LoggerFactory.getLogger(LocationContextController.class);
+    private final LocationContextService locationContextService;
 
-  public LocationContextController(LocationContextService locationContextService) {
-    this.locationContextService = locationContextService;
-  }
+    public LocationContextController(LocationContextService locationContextService) {
+        this.locationContextService = locationContextService;
+    }
 
-  /**
-   * Обрабатывает запрос на анализ контекста локации.
-   *
-   * <p>Выполняет валидацию входящих данных, логирует вызов, делегирует бизнес-логику сервису и
-   * возвращает результат клиенту.
-   *
-   * @param request объект, содержащий адрес, время начала/окончания прогулки и темп движения;
-   *     обязательные поля должны быть заполнены согласно аннотациям валидации
-   * @return {@link ResponseEntity} с телом {@link LocationContextResponse} и статусом 200 OK
-   */
-  @PostMapping("/analyze")
-  public ResponseEntity<?> getLocation(@Valid @RequestBody LocationContextRequest request) {
-    logger.info("Вызван метод getLocation");
-    LocationContextResponse response = locationContextService.getLocation(request);
-    return ResponseEntity.ok(response);
-  }
+    /**
+     * Обрабатывает запрос на анализ контекста локации.
+     *
+     * <p>Выполняет валидацию входящих данных, логирует вызов, делегирует бизнес-логику сервису и
+     * возвращает результат клиенту.
+     *
+     * @param request объект, содержащий адрес, время начала/окончания прогулки и темп движения;
+     *                обязательные поля должны быть заполнены согласно аннотациям валидации
+     * @return {@link ResponseEntity} с телом {@link LocationContextResponse} и статусом 200 OK
+     */
+    @PostMapping("/analyze")
+    public ResponseEntity<?> getLocation(@Valid @RequestBody LocationContextRequest request) {
+        logger.info("Вызван метод getLocation");
+        LocationContextResponse response = locationContextService.getLocation(request);
+        return ResponseEntity.ok(response);
+    }
 }

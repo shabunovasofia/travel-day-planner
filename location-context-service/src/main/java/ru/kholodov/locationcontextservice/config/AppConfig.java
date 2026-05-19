@@ -6,26 +6,35 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * Конфигурационный класс приложения.
+ *
+ * <p>Определяет бин {@link RestTemplate} с перехватчиком для логирования
+ * HTTP-запросов и ответов. Чувствительные параметры (например, API-ключ)
+ * маскируются в логах.
+ *
+ * @author Stepan Kholodov
+ */
 @Configuration
 public class AppConfig {
 
-  @Bean
-  public RestTemplate restTemplate() {
-    RestTemplate rt = new RestTemplate();
-    rt.getInterceptors()
-        .add(
-            (request, body, execution) -> {
-              var log = LoggerFactory.getLogger("HTTP");
-              String safeUri = request.getURI().toString().replaceAll("key=[^&]+", "key=***");
-              log.debug("=> {} {}", request.getMethod(), safeUri);
-              request.getHeaders().forEach((k, v) -> log.info("=>   {}: {}", k, v));
+    @Bean
+    public RestTemplate restTemplate() {
+        RestTemplate rt = new RestTemplate();
+        rt.getInterceptors()
+                .add(
+                        (request, body, execution) -> {
+                            var log = LoggerFactory.getLogger("HTTP");
+                            String safeUri = request.getURI().toString().replaceAll("key=[^&]+", "key=***");
+                            log.debug("=> {} {}", request.getMethod(), safeUri);
+                            request.getHeaders().forEach((k, v) -> log.info("=>   {}: {}", k, v));
 
-              ClientHttpResponse resp = execution.execute(request, body);
+                            ClientHttpResponse resp = execution.execute(request, body);
 
-              log.info("<= {} {}", resp.getStatusCode(), resp.getStatusText());
-              resp.getHeaders().forEach((k, v) -> log.info("<=   {}: {}", k, v));
-              return resp;
-            });
-    return rt;
-  }
+                            log.info("<= {} {}", resp.getStatusCode(), resp.getStatusText());
+                            resp.getHeaders().forEach((k, v) -> log.info("<=   {}: {}", k, v));
+                            return resp;
+                        });
+        return rt;
+    }
 }
