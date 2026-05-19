@@ -9,18 +9,33 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 @Component
-public class OpenTripMapClient {
+public final class OpenTripMapClient {
 
+  /** Базовый URL OpenTripMap API. */
   private static final String BASE_URL = "https://api.opentripmap.com/0.1/en/places";
+
+  /** Базовый URL OpenStreetMap API. */
   private static final String OSM_BASE_URL = "https://api.openstreetmap.org/api/0.6";
 
-  @Value("${opentripmap.api-key}")
-  private String API_KEY;
-
+  /** Максимальное количество мест в ответе. */
   private static final int LIMIT = 10;
 
+  /** API-ключ OpenTripMap. */
+  @Value("${opentripmap.api-key}")
+  private String apiKey;
+
+  /** HTTP-клиент для запросов к внешним API. */
   private final RestTemplate restTemplate = new RestTemplate();
 
+  /**
+   * Возвращает список мест вблизи заданных координат.
+   *
+   * @param lat широта
+   * @param lon долгота
+   * @param radius радиус поиска в метрах
+   * @param kinds категория мест в формате OpenTripMap
+   * @return список найденных мест
+   */
   public List<OpenTripMapPlace> findPlaces(
       final double lat, final double lon, final int radius, final String kinds) {
     String url =
@@ -33,11 +48,14 @@ public class OpenTripMapClient {
             lat,
             kinds,
             LIMIT,
-            API_KEY);
+            apiKey);
+
     Map response = restTemplate.getForObject(url, Map.class);
     List<Map> features = (List<Map>) response.get("features");
 
-    if (features == null) return List.of();
+    if (features == null) {
+      return List.of();
+    }
 
     List<OpenTripMapPlace> result = new ArrayList<>();
     for (Map feature : features) {
@@ -45,7 +63,9 @@ public class OpenTripMapClient {
       String xid = (String) properties.get("xid");
       String name = (String) properties.get("name");
 
-      if (name == null || name.isEmpty()) continue;
+      if (name == null || name.isEmpty()) {
+        continue;
+      }
 
       Map geometry = (Map) feature.get("geometry");
       List<Double> coords = (List<Double>) geometry.get("coordinates");
@@ -53,7 +73,9 @@ public class OpenTripMapClient {
       double placeLat = coords.get(1);
 
       OpenTripMapPlace place = fetchDetails(xid, name, placeLat, placeLon);
-      if (place != null) result.add(place);
+      if (place != null) {
+        result.add(place);
+      }
     }
     return result;
   }
@@ -61,7 +83,7 @@ public class OpenTripMapClient {
   private OpenTripMapPlace fetchDetails(
       final String xid, final String name, final double lat, final double lon) {
     try {
-      String url = String.format("%s/xid/%s?apikey=%s", BASE_URL, xid, API_KEY);
+      String url = String.format("%s/xid/%s?apikey=%s", BASE_URL, xid, apiKey);
       Map details = restTemplate.getForObject(url, Map.class);
       String osmRef = details != null ? (String) details.get("osm") : null;
 
@@ -81,10 +103,18 @@ public class OpenTripMapClient {
         String suburb = (String) addressMap.getOrDefault("suburb", "");
 
         StringBuilder sb = new StringBuilder();
-        if (!road.isEmpty()) sb.append(road);
-        if (!houseNumber.isEmpty()) sb.append(", ").append(houseNumber);
-        if (!suburb.isEmpty()) sb.append(", ").append(suburb);
-        if (!city.isEmpty()) sb.append(", ").append(city);
+        if (!road.isEmpty()) {
+          sb.append(road);
+        }
+        if (!houseNumber.isEmpty()) {
+          sb.append(", ").append(houseNumber);
+        }
+        if (!suburb.isEmpty()) {
+          sb.append(", ").append(suburb);
+        }
+        if (!city.isEmpty()) {
+          sb.append(", ").append(city);
+        }
 
         address = sb.toString();
       }
