@@ -1,7 +1,9 @@
 plugins {
 	id 'java'
+	id 'checkstyle'
 	id 'org.springframework.boot' version '3.5.12'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.diffplug.spotless' version '6.25.0'
 }
 
 group = 'com.travelplanner'
@@ -18,8 +20,21 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+checkstyle {
+	toolVersion = '10.21.4'
+	configFile = file("${rootDir}/checkstyle.xml")
+	ignoreFailures = true
+}
+
+spotless {
+	java {
+		googleJavaFormat('1.19.2')
+	}
 }
 
 tasks.named('test') {

@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @EnableConfigurationProperties(PlannerIntegrationProperties.class)
 public class PlannerApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(PlannerApplication.class, args);
-	}
+  public static void main(String[] args) {
+    SpringApplication.run(PlannerApplication.class, args);
+  }
 }
