@@ -1,7 +1,7 @@
 package ru.kholodov.locationcontextservice.services;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.kholodov.locationcontextservice.dto.Coordinates;
 import ru.kholodov.locationcontextservice.dto.LocationContextRequest;
@@ -11,35 +11,27 @@ import ru.kholodov.locationcontextservice.exception.AddressNotFoundException;
 /**
  * Основной сервис для получения контекста прогулки.
  *
- * <p>Объединяет геокодирование адреса, вычисление доступного времени и
- * определение радиуса пешеходной доступности через изохронный сервис.
- * При недоступности изохрон используется fallback-расчёт на основе
- * средней скорости ходьбы (5 км/ч).
+ * <p>Объединяет геокодирование адреса, вычисление доступного времени и определение радиуса
+ * пешеходной доступности через изохронный сервис. При недоступности изохрон используется
+ * fallback-расчёт на основе скорости текущего темпа ({@link ru.kholodov.locationcontextservice.enums.Pace#speedKmh}).
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class LocationContextService {
-
-    private static final Logger logger = LoggerFactory.getLogger(LocationContextService.class);
 
     private final GeocodingService geocodingService;
     private final IsochroneService isochroneService;
-
-    private static final double DEFAULT_WALKING_SPEED_KMH = 5.0;
-
-    public LocationContextService(
-            GeocodingService geocodingService, IsochroneService isochroneService) {
-        this.geocodingService = geocodingService;
-        this.isochroneService = isochroneService;
-    }
 
     /**
      * Выполняет полный анализ контекста прогулки по заданному запросу.
      *
      * <p>Шаги:
+     *
      * <ol>
-     *   <li>Геокодирование адреса в координаты</li>
-     *   <li>Вычисление доступного времени в часах</li>
-     *   <li>Расчёт радиуса доступности через изохрону или fallback-формулу</li>
+     *   <li>Геокодирование адреса в координаты
+     *   <li>Вычисление доступного времени в часах
+     *   <li>Расчёт радиуса доступности через изохрону или fallback-формулу
      * </ol>
      *
      * @param request запрос с адресом, временем и темпом
@@ -49,17 +41,18 @@ public class LocationContextService {
     public LocationContextResponse getLocation(LocationContextRequest request) {
         String address = request.getLocation();
 
-        // 1. Геокодирование
         Coordinates coordinates =
                 geocodingService
                         .geocode(address)
                         .orElseThrow(
                                 () ->
                                         new AddressNotFoundException(
-                                                "Не удалось найти координаты для адреса: " + address));
+                                                "Не удалось найти координаты для адреса: "
+                                                        + address));
 
         double availableHours =
-                java.time.Duration.between(request.getStartTime(), request.getEndTime()).toMinutes() / 60.0;
+                java.time.Duration.between(request.getStartTime(), request.getEndTime()).toMinutes()
+                        / 60.0;
 
         int radiusMeters =
                 isochroneService
@@ -67,11 +60,13 @@ public class LocationContextService {
                         .map(d -> (int) Math.round(d))
                         .orElseGet(
                                 () -> {
-                                    // Fallback: радиус = (доступное время * скорость) / 2 (туда‑обратно)
-                                    double maxDistanceKm = availableHours * DEFAULT_WALKING_SPEED_KMH / 2.0;
+                                    double maxDistanceKm =
+                                            availableHours * request.getPace().speedKmh / 2.0;
                                     int fallbackRadius = (int) (maxDistanceKm * 1000);
-                                    logger.warn(
-                                            "Изохрона недоступна. fallback-радиус: {} м", fallbackRadius);
+                                    log.warn(
+                                            "Изохрона недоступна. Темп: {}, fallback-радиус: {} м",
+                                            request.getPace(),
+                                            fallbackRadius);
                                     return fallbackRadius;
                                 });
 
