@@ -1,6 +1,6 @@
 # Travel Day Planner
 
-REST API для планирования дня в городе. Пользователь вводит адрес, временной интервал и темп прогулки — система автоматически подбирает подходящие места и строит готовое расписание на день.
+REST API для планирования дня в городе. Пользователь вводит адрес, временной интервал и темп прогулки — система автоматически геокодирует адрес, подбирает подходящие места поблизости и строит оптимальное расписание на день с учётом времени в пути между точками.
 
 ---
 
@@ -8,11 +8,11 @@ REST API для планирования дня в городе. Пользов�
 
 Проект реализован как три независимых микросервиса:
 
-| Сервис                     | Порт | Роль |
-|----------------------------|------|------|
-| `location-context-service` | 8081 | Точка входа. Геокодирует адрес, рассчитывает радиус пешеходной доступности, оркестрирует вызовы к двум другим сервисам, возвращает клиенту готовый маршрут |
-| `places-service`           | 8082 | Ищет достопримечательности вблизи заданных координат через OpenTripMap API, фильтрует по категориям, сортирует по рейтингу |
-| `planner-service`          | 8083 | Строит оптимальное расписание из списка мест с учётом времени в пути между точками и графика работы |
+| Сервис | Порт | Роль |
+|--------|------|------|
+| `location-context-service` | 8081 | Точка входа. Геокодирует адрес, рассчитывает радиус пешеходной доступности через изохроны, оркестрирует вызовы к двум другим сервисам, возвращает клиенту готовый маршрут |
+| `places-service` | 8082 | Ищет достопримечательности вблизи заданных координат через OpenTripMap API, фильтрует по категориям, рассчитывает время посещения, сортирует по рейтингу |
+| `planner-service` | 8083 | Принимает список мест, фильтрует их через AI (DeepSeek), строит оптимальное расписание с учётом времени в пути и графика работы мест |
 
 Клиент отправляет **один запрос** в `location-context-service` и получает полный маршрут на день.
 
@@ -26,36 +26,62 @@ REST API для планирования дня в городе. Пользов�
 - **Spring Boot 3.x**
 - **Gradle** (Groovy DSL)
 - **JUnit 5** + **Mockito**
-- **Docker**
+- **Docker** + **Docker Compose**
+- **Checkstyle** (Sun Style) — статический анализ кода
+- **Spotless** (google-java-format) — автоформатирование кода
 
 ### Взаимодействие между сервисами
 
 ```
 Клиент
   └─► location-context-service :8081
-            ├─► places-service :8082
-            └─► planner-service :8083
+            ├─► places-service :8082      (поиск мест по координатам)
+            └─► planner-service :8083     (построение расписания)
 ```
 
 `location-context-service` вызывает `places-service` и `planner-service` по HTTP.
-Остальные сервисы не обращаются друг к другу.
+Остальные сервисы не обращаются друг к другу напрямую.
 
 ### Внешние сервисы
 
-| Сервис                                             | Используется в | Назначение |
-|----------------------------------------------------|---------------|------------|
-| [OpenTripMap API](https://opentripmap.io)          | places-service | Поиск мест по координатам и категориям |
-| [OpenStreetMap API](https://openstreetmap.org)     | places-service | Загрузка графика работы мест |
-| [LocationIQ API](https://locationiq.com)           | location-context-service | Геокодинг адреса в координаты |
-| [ORS Isochrones API](https://openrouteservice.org) | location-context-service | Расчёт радиуса пешеходной доступности |
+| Сервис | Используется в | Назначение |
+|--------|---------------|------------|
+| [OpenTripMap API](https://opentripmap.io) | places-service | Поиск мест по координатам и категориям |
+| [LocationIQ API](https://locationiq.com) | location-context-service | Геокодинг адреса в координаты |
+| [OpenRouteService Isochrones](https://openrouteservice.org) | location-context-service | Расчёт радиуса пешеходной доступности |
+| [DeepSeek API](https://api.deepseek.com) | planner-service | AI-фильтрация мест перед построением маршрута |
 
 ---
 
 ## 3. Способы запуска
 
-Сервисы запускаются независимо. Каждый требует своих переменных окружения.
+### Запуск через Docker Compose (рекомендуется)
 
-### Локальный запуск
+Создайте файл `.env` в корне репозитория:
+
+```env
+OPENTRIPMAP_API_KEY=ваш_ключ
+GEOCODING_API_KEY=ваш_ключ
+ISOCHRONE_API_KEY=ваш_ключ
+DEEPSEEK_API_KEY=ваш_ключ
+```
+
+Затем запустите:
+
+```bash
+docker-compose up --build
+```
+
+Docker Compose автоматически подхватит переменные из `.env`. `DEEPSEEK_API_KEY` необязателен — без него AI-фильтрация просто пропускается.
+
+Остановить:
+```bash
+docker-compose down
+```
+
+### Локальный запуск без Docker
+
+Каждый сервис запускается отдельно из своей папки:
 
 **places-service:**
 ```bash
@@ -66,81 +92,39 @@ OPENTRIPMAP_API_KEY=ваш_ключ ./gradlew bootRun
 **planner-service:**
 ```bash
 cd planner-service
-./gradlew bootRun
+DEEPSEEK_API_KEY=ваш_ключ ./gradlew bootRun
 ```
 
 **location-context-service:**
 ```bash
 cd location-context-service
 GEOCODING_API_KEY=ваш_ключ \
-ORS_API_KEY=ваш_ключ \
+ISOCHRONE_API_KEY=ваш_ключ \
 ./gradlew bootRun
 ```
 
-### Запуск через Docker
+### Переменные окружения
 
-**places-service:**
-```bash
-cd places-service
-./gradlew bootJar
-docker build -t places-service .
-docker run -p 8082:8082 -e OPENTRIPMAP_API_KEY=ваш_ключ places-service
-```
-
-**planner-service:**
-```bash
-cd planner-service
-./gradlew bootJar
-docker build -t planner-service .
-docker run -p 8083:8083 planner-service
-```
-
-### Конфигурация
-
-Настройки каждого сервиса задаются в `src/main/resources/application.properties`.
-API-ключи вынесены в переменные окружения и подставляются через `${VAR_NAME}`.
-URL соседних сервисов прописаны в properties напрямую.
-
-**places-service** (`application.properties`):
-```properties
-server.port=8082
-opentripmap.api-key=${OPENTRIPMAP_API_KEY}
-```
-
-**location-context-service** (`application.properties`):
-```properties
-server.port=8081
-geocoding.url=https://us1.locationiq.com/v1/search
-geocoding.api-key=${GEOCODING_API_KEY}
-ors.url=https://api.openrouteservice.org/v2/isochrones/foot-walking
-ors.api-key=${ORS_API_KEY}
-```
-
-**planner-service** (`application.properties`):
-```properties
-server.port=8083
-planner.integration.location-context-base-url=http://localhost:8081
-planner.integration.places-base-url=http://localhost:8082
-```
-
-**Переменные окружения (API-ключи):**
-
-| Переменная | Сервис | Описание |
-|-----------|--------|----------|
-| `OPENTRIPMAP_API_KEY` | places-service | API-ключ OpenTripMap. Получить: https://opentripmap.io |
-| `GEOCODING_API_KEY` | location-context-service | API-ключ LocationIQ. Получить: https://locationiq.com |
-| `ORS_API_KEY` | location-context-service | API-ключ OpenRouteService. Получить: https://openrouteservice.org |
+| Переменная | Сервис | Обязательная | Описание |
+|-----------|--------|------|----------|
+| `OPENTRIPMAP_API_KEY` | places-service | да | API-ключ OpenTripMap. [Получить ключ](https://opentripmap.io/product) · [Документация](https://opentripmap.io/docs) |
+| `GEOCODING_API_KEY` | location-context-service | да | API-ключ LocationIQ. [Получить ключ](https://locationiq.com/register) · [Документация](https://locationiq.com/docs) |
+| `ISOCHRONE_API_KEY` | location-context-service | да | API-ключ OpenRouteService. [Получить ключ](https://openrouteservice.org/dev/#/signup) · [Документация](https://openrouteservice.org/dev/#/api-docs/v2/isochrones) |
+| `DEEPSEEK_API_KEY` | planner-service | нет | API-ключ DeepSeek для AI-фильтрации. [Получить ключ](https://platform.deepseek.com/api_keys) · [Документация](https://platform.deepseek.com/docs) |
 
 ---
 
 ## 4. API документация
 
 Swagger UI доступен при запущенном сервисе:
-- location-context-service: http://localhost:8081/swagger-ui/index.html
-- places-service: http://localhost:8082/swagger-ui/index.html
-- planner-service: http://localhost:8083/swagger-ui/index.html
 
-### location-context-service — `POST /api/v1/context/analyze`
+- `location-context-service`: http://localhost:8081/swagger-ui/index.html
+- `places-service`: http://localhost:8082/swagger-ui/index.html
+- `planner-service`: http://localhost:8083/swagger-ui/index.html
+
+---
+
+### `POST /api/v1/context/analyze` — location-context-service
 
 Основной эндпоинт. Принимает адрес и параметры прогулки, возвращает полный маршрут.
 
@@ -151,13 +135,19 @@ Swagger UI доступен при запущенном сервисе:
   "startTime": "10:00",
   "endTime": "16:00",
   "pace": "MEDIUM",
-  "categories": ["museum", "park"]
+  "categories": ["museum", "park", "cafe"]
 }
 ```
 
-`pace`: `SLOW` / `MEDIUM` / `FAST` — влияет на радиус поиска мест.
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `location` | string | Адрес или название места |
+| `startTime` | string | Время начала прогулки (HH:mm) |
+| `endTime` | string | Время конца прогулки (HH:mm) |
+| `pace` | string | Темп: `SLOW`, `MEDIUM`, `FAST` — влияет на радиус поиска |
+| `categories` | array | Категории мест: `museum`, `park`, `cafe`, `gallery`, `restaurant` |
 
-**Ответ:**
+**Ответ `200 OK`:**
 ```json
 {
   "data": {
@@ -166,11 +156,36 @@ Swagger UI доступен при запущенном сервисе:
     "longitude": 37.592,
     "radiusMeters": 3000,
     "availableHours": 6.0,
-    "places": [...],
+    "startTime": "10:00",
+    "endTime": "16:00",
+    "pace": "MEDIUM",
+    "places": [
+      {
+        "placeId": "otm_museum_abc123",
+        "name": "Третьяковская галерея",
+        "category": "museum",
+        "latitude": 55.7415,
+        "longitude": 37.6208,
+        "estimatedHours": 2.5,
+        "rating": 4.8,
+        "address": "Лаврушинский переулок, 10",
+        "openingHoursText": "Mo-Su 10:00-18:00",
+        "scheduleUnknown": false
+      }
+    ],
     "plan": {
-      "items": [...],
-      "totalPlaces": 2,
-      "totalHours": 4.0,
+      "items": [
+        {
+          "placeId": "otm_museum_abc123",
+          "placeName": "Третьяковская галерея",
+          "arrivalTime": "10:18",
+          "departureTime": "12:48",
+          "category": "museum",
+          "travelTimeMinutes": 18
+        }
+      ],
+      "totalPlaces": 1,
+      "totalHours": 2.5,
       "warnings": []
     }
   }
@@ -179,7 +194,9 @@ Swagger UI доступен при запущенном сервисе:
 
 ---
 
-### places-service — `POST /api/v1/places/search`
+### `POST /api/v1/places/search` — places-service
+
+Поиск мест рядом с координатами.
 
 **Запрос:**
 ```json
@@ -192,7 +209,15 @@ Swagger UI доступен при запущенном сервисе:
 }
 ```
 
-**Ответ:**
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `latitude` | number | Широта центра поиска |
+| `longitude` | number | Долгота центра поиска |
+| `radiusMeters` | integer | Радиус поиска в метрах (больше 0) |
+| `availableHours` | number | Доступное время в часах — влияет на оценку времени посещения |
+| `categories` | array | Категории мест: `museum`, `park`, `cafe`, `gallery`, `restaurant`. Если не указаны — используются все |
+
+**Ответ `200 OK`:**
 ```json
 {
   "data": {
@@ -207,7 +232,7 @@ Swagger UI доступен при запущенном сервисе:
         "rating": 4.8,
         "address": "Лаврушинский переулок, 10",
         "description": "Знаменитый музей русского искусства",
-        "openingHoursText": "Mo-Su 10:00-18:00; PH off",
+        "openingHoursText": "Mo-Su 10:00-18:00",
         "scheduleUnknown": false
       }
     ],
@@ -216,11 +241,11 @@ Swagger UI доступен при запущенном сервисе:
 }
 ```
 
-Поддерживаемые категории: `museum`, `park`, `cafe`, `gallery`, `restaurant`
-
 ---
 
-### planner-service — `POST /api/v1/plan/build`
+### `POST /api/v1/plan/build` — planner-service
+
+Строит расписание из списка мест.
 
 **Запрос:**
 ```json
@@ -237,6 +262,7 @@ Swagger UI доступен при запущенном сервисе:
       "latitude": 55.7415,
       "longitude": 37.6208,
       "estimatedHours": 2.5,
+      "rating": 4.8,
       "openingHoursText": "Mo-Su 10:00-18:00",
       "scheduleUnknown": false
     }
@@ -244,9 +270,15 @@ Swagger UI доступен при запущенном сервисе:
 }
 ```
 
-`startLatitude` / `startLongitude` — опциональные. Если переданы, учитывается время пешего пути от стартовой точки (5 км/ч).
+| Поле | Тип | Обязательное | Описание |
+|------|-----|------|----------|
+| `startTime` | string | да | Время начала прогулки (HH:mm) |
+| `endTime` | string | да | Время конца прогулки (HH:mm) |
+| `places` | array | да | Список мест для включения в маршрут |
+| `startLatitude` | number | нет | Широта стартовой точки — если указана, учитывается время пешего пути (5 км/ч) |
+| `startLongitude` | number | нет | Долгота стартовой точки |
 
-**Ответ:**
+**Ответ `200 OK`:**
 ```json
 {
   "data": {
@@ -262,16 +294,17 @@ Swagger UI доступен при запущенном сервисе:
     ],
     "totalPlaces": 1,
     "totalHours": 2.5,
-    "warnings": []
+    "warnings": [],
+    "evaluatedOrderings": 1
   }
 }
 ```
 
-### planner-service — `GET /api/v1/plan/health`
+### `GET /api/v1/plan/health` — planner-service
 
-Проверка работоспособности.
+Проверка работоспособности сервиса.
 
-**Ответ:**
+**Ответ `200 OK`:**
 ```json
 { "status": "ok" }
 ```
@@ -291,6 +324,12 @@ Swagger UI доступен при запущенном сервисе:
 }
 ```
 
+| Код | HTTP | Описание |
+|-----|------|----------|
+| `VALIDATION_ERROR` | 400 | Некорректные параметры запроса |
+| `ADDRESS_NOT_FOUND` | 404 | Адрес не удалось геокодировать |
+| `INTERNAL_ERROR` | 500 | Внутренняя ошибка сервера |
+
 ---
 
 ## 5. Как тестировать
@@ -298,14 +337,35 @@ Swagger UI доступен при запущенном сервисе:
 ### Запуск тестов
 
 ```bash
+# places-service
 cd places-service && ./gradlew test
-cd location-context-service && ./gradlew test
+
+# planner-service
 cd planner-service && ./gradlew test
+
+# location-context-service
+cd location-context-service && ./gradlew test
+```
+
+### Проверка линтера
+
+```bash
+cd places-service && ./gradlew checkstyleMain
+cd planner-service && ./gradlew checkstyleMain
+cd location-context-service && ./gradlew checkstyleMain
+```
+
+### Автоформатирование кода
+
+```bash
+cd places-service && ./gradlew spotlessApply
+cd planner-service && ./gradlew spotlessApply
+cd location-context-service && ./gradlew spotlessApply
 ```
 
 ### Git pre-commit hook
 
-Перед каждым коммитом автоматически запускаются тесты всех трёх сервисов. Если хотя бы один тест не проходит — коммит не создаётся.
+Перед каждым коммитом автоматически запускаются тесты всех трёх сервисов. Если хотя бы один тест не проходит — коммит блокируется.
 
 Установка (один раз после клонирования репозитория):
 
@@ -313,6 +373,13 @@ cd planner-service && ./gradlew test
 cp scripts/pre-commit .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
+
+### Проверка через Swagger
+
+После запуска сервисов откройте:
+- http://localhost:8081/swagger-ui/index.html — основной маршрут
+- http://localhost:8082/swagger-ui/index.html — поиск мест
+- http://localhost:8083/swagger-ui/index.html — планировщик
 
 ---
 
@@ -326,4 +393,4 @@ chmod +x .git/hooks/pre-commit
 | Макшанцева Софья | planner-service | [@goiddochka1408](https://github.com/goiddochka1408) |
 | Холодов Степан | location-context-service | [@StepanKholodov](https://github.com/StepanKholodov) |
 
-По вопросам: GitHub Issues в этом репозитории.
+По вопросам и багам: [GitHub Issues](https://github.com/shabunovasofia/travel-day-planner/issues)
