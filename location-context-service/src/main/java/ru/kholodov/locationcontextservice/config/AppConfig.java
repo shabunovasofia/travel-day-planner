@@ -13,58 +13,55 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 /**
  * Конфигурационный класс приложения.
  *
- * <p>Настраивает общий {@link org.springframework.web.client.RestClient.Builder} через
- * {@link RestClientCustomizer}: устанавливает таймауты подключения/чтения и перехватчик для
- * логирования HTTP-запросов. API-ключи маскируются в логах. Каждый сервис инжектирует
- * {@code RestClient.Builder} и строит собственный клиент с нужным baseUrl и заголовками.
+ * <p>Настраивает общий {@link org.springframework.web.client.RestClient.Builder} через {@link
+ * RestClientCustomizer}: устанавливает таймауты подключения/чтения и перехватчик для логирования
+ * HTTP-запросов. API-ключи маскируются в логах. Каждый сервис инжектирует {@code
+ * RestClient.Builder} и строит собственный клиент с нужным baseUrl и заголовками.
  *
- * <p>В качестве транспорта используется Java 21 {@link HttpClient} (через
- * {@link JdkClientHttpRequestFactory}) — встроенный пул соединений, HTTP/2 по умолчанию.
+ * <p>В качестве транспорта используется Java 21 {@link HttpClient} (через {@link
+ * JdkClientHttpRequestFactory}) — встроенный пул соединений, HTTP/2 по умолчанию.
  *
  * @author Stepan Kholodov
  */
 @Configuration
 public class AppConfig {
 
-    @Value("${http.connect-timeout-ms:5000}")
-    private int connectTimeoutMs;
+  @Value("${http.connect-timeout-ms:5000}")
+  private int connectTimeoutMs;
 
-    @Value("${http.read-timeout-ms:10000}")
-    private int readTimeoutMs;
+  @Value("${http.read-timeout-ms:10000}")
+  private int readTimeoutMs;
 
-    /**
-     * Кастомизирует авто-конфигурируемый {@code RestClient.Builder}: добавляет таймауты и
-     * перехватчик логирования, применяемые ко всем клиентам.
-     */
-    @Bean
-    public RestClientCustomizer restClientCustomizer() {
-        HttpClient httpClient =
-                HttpClient.newBuilder()
-                        .connectTimeout(Duration.ofMillis(connectTimeoutMs))
-                        .build();
+  /**
+   * Кастомизирует авто-конфигурируемый {@code RestClient.Builder}: добавляет таймауты и перехватчик
+   * логирования, применяемые ко всем клиентам.
+   */
+  @Bean
+  public RestClientCustomizer restClientCustomizer() {
+    HttpClient httpClient =
+        HttpClient.newBuilder().connectTimeout(Duration.ofMillis(connectTimeoutMs)).build();
 
-        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
-        factory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
+    JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+    factory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
 
-        return builder -> builder.requestFactory(factory).requestInterceptor(loggingInterceptor());
-    }
+    return builder -> builder.requestFactory(factory).requestInterceptor(loggingInterceptor());
+  }
 
-    /**
-     * Перехватчик для DEBUG-логирования каждого исходящего HTTP-запроса.
-     *
-     * <p>В URL маскируется query-параметр {@code key=...}, чтобы API-ключи не попадали в логи.
-     *
-     * @return {@link ClientHttpRequestInterceptor} для регистрации в {@code RestClient.Builder}
-     */
-    private ClientHttpRequestInterceptor loggingInterceptor() {
-        return (request, body, execution) -> {
-            var log = LoggerFactory.getLogger("HTTP");
-            String safeUri =
-                    request.getURI().toString().replaceAll("key=[^&]+", "key=***");
-            log.debug("=> {} {}", request.getMethod(), safeUri);
-            var resp = execution.execute(request, body);
-            log.info("<= {}", resp.getStatusCode());
-            return resp;
-        };
-    }
+  /**
+   * Перехватчик для DEBUG-логирования каждого исходящего HTTP-запроса.
+   *
+   * <p>В URL маскируется query-параметр {@code key=...}, чтобы API-ключи не попадали в логи.
+   *
+   * @return {@link ClientHttpRequestInterceptor} для регистрации в {@code RestClient.Builder}
+   */
+  private ClientHttpRequestInterceptor loggingInterceptor() {
+    return (request, body, execution) -> {
+      var log = LoggerFactory.getLogger("HTTP");
+      String safeUri = request.getURI().toString().replaceAll("key=[^&]+", "key=***");
+      log.debug("=> {} {}", request.getMethod(), safeUri);
+      var resp = execution.execute(request, body);
+      log.info("<= {}", resp.getStatusCode());
+      return resp;
+    };
+  }
 }

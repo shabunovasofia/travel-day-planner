@@ -1,6 +1,5 @@
 package ru.kholodov.locationcontextservice.dto.planner;
 
-
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,18 +19,18 @@ import ru.kholodov.locationcontextservice.dto.places.PlacesSearchResponse;
 @AllArgsConstructor
 public class PlanBuildRequest {
 
-    /** Время начала прогулки в формате {@code HH:mm}. */
-    private String startTime;
+  /** Время начала прогулки в формате {@code HH:mm}. */
+  private String startTime;
 
-    /** Время окончания прогулки в формате {@code HH:mm}. */
-    private String endTime;
+  /** Время окончания прогулки в формате {@code HH:mm}. */
+  private String endTime;
 
-    /** Кандидаты на посещение, полученные от places-service. */
-    private List<PlacesSearchResponse.PlaceDto> places;
+  /** Кандидаты на посещение, полученные от places-service. */
+  private List<PlacesSearchResponse.PlaceDto> places;
 
-    /** Широта стартовой точки маршрута (опционально). */
-    private Double startLatitude;
+  /** Широта стартовой точки маршрута (опционально). */
+  private Double startLatitude;
 
-    /** Долгота стартовой точки маршрута (опционально). */
-    private Double startLongitude;
+  /** Долгота стартовой точки маршрута (опционально). */
+  private Double startLongitude;
 }

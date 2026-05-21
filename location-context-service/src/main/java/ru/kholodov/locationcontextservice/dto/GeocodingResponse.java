@@ -12,15 +12,15 @@ import lombok.Data;
 @Data
 public class GeocodingResponse {
 
-    /** Широта в строковом представлении (например, {@code "55.757"}). */
-    @JsonProperty("lat")
-    private String lat;
+  /** Широта в строковом представлении (например, {@code "55.757"}). */
+  @JsonProperty("lat")
+  private String lat;
 
-    /** Долгота в строковом представлении (например, {@code "37.615"}). */
-    @JsonProperty("lon")
-    private String lon;
+  /** Долгота в строковом представлении (например, {@code "37.615"}). */
+  @JsonProperty("lon")
+  private String lon;
 
-    /** Отображаемое имя найденного адреса (display_name из ответа LocationIQ). */
-    @JsonProperty("display_name")
-    private String displayName;
+  /** Отображаемое имя найденного адреса (display_name из ответа LocationIQ). */
+  @JsonProperty("display_name")
+  private String displayName;
 }

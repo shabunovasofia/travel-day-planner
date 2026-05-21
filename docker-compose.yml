@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   places-service:
     build: ./places-service
@@ -20,8 +18,13 @@ services:
     ports:
       - "8081:8081"
     environment:
+      # API-ключи внешних сервисов
       - GEOCODING_API_KEY=${GEOCODING_API_KEY}
-      - ORS_API_KEY=${ORS_API_KEY}
+      - ISOCHRONE_API_KEY=${ISOCHRONE_API_KEY}
+      # Внутри сети compose обращение к соседям по имени сервиса, не по localhost.
+      # Spring Boot relaxed binding: INTEGRATION_PLACES_BASE_URL -> integration.places-base-url.
+      - INTEGRATION_PLACES_BASE_URL=http://places-service:8082
+      - INTEGRATION_PLANNER_BASE_URL=http://planner-service:8083
     depends_on:
       - places-service
       - planner-service
