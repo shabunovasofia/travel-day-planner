@@ -1,12 +1,13 @@
 package ru.kholodov.locationcontextservice.exception;
 
-import java.util.Map;
-import java.util.stream.Collectors;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Глобальный обработчик исключений REST API.
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  *   <li>500 — внутренние ошибки сервера</li>
  * </ul>
  */
-
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -70,4 +71,13 @@ public class GlobalExceptionHandler {
                         .collect(Collectors.joining(", "));
         return ResponseEntity.status(400).body(Map.of("error", message));
     }
+
+    @ExceptionHandler(org.springframework.web.client.ResourceAccessException.class)
+    public ResponseEntity<Map<String, String>> handleUpstreamTimeout(
+            org.springframework.web.client.ResourceAccessException ex) {
+        log.error("Таймаут при вызове upstream-сервиса: {}", ex.getMessage());
+        return ResponseEntity.status(504)
+                .body(Map.of("error", "Сервис временно недоступен. Попробуйте позже."));
+    }
+
 }
