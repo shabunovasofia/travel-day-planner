@@ -9,4 +9,5 @@ public record OpenTripMapPlace(
     String address,
     String description,
     String openingHoursText,
-    boolean scheduleUnknown) {}
+    boolean scheduleUnknown,
+    String category) {}

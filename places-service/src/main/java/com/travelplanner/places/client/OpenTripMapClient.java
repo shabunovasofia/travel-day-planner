@@ -1,6 +1,5 @@
 package com.travelplanner.places.client;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -57,31 +56,37 @@ public final class OpenTripMapClient {
       return List.of();
     }
 
-    List<OpenTripMapPlace> result = new ArrayList<>();
-    for (Map feature : features) {
-      Map properties = (Map) feature.get("properties");
-      String xid = (String) properties.get("xid");
-      String name = (String) properties.get("name");
+    return features.parallelStream()
+        .map(
+            feature -> {
+              Map properties = (Map) feature.get("properties");
+              String xid = (String) properties.get("xid");
+              String name = (String) properties.get("name");
 
-      if (name == null || name.isEmpty()) {
-        continue;
-      }
+              if (name == null || name.isEmpty()) {
+                return null;
+              }
 
-      Map geometry = (Map) feature.get("geometry");
-      List<Double> coords = (List<Double>) geometry.get("coordinates");
-      double placeLon = coords.get(0);
-      double placeLat = coords.get(1);
+              Map geometry = (Map) feature.get("geometry");
+              List<Double> coords = (List<Double>) geometry.get("coordinates");
+              double placeLon = coords.get(0);
+              double placeLat = coords.get(1);
 
-      OpenTripMapPlace place = fetchDetails(xid, name, placeLat, placeLon);
-      if (place != null) {
-        result.add(place);
-      }
-    }
-    return result;
+              String kindsFromResponse = (String) properties.get("kinds");
+              String category = CategoryMapper.fromKinds(kindsFromResponse);
+
+              return fetchDetails(xid, name, placeLat, placeLon, category);
+            })
+        .filter(place -> place != null)
+        .toList();
   }
 
   private OpenTripMapPlace fetchDetails(
-      final String xid, final String name, final double lat, final double lon) {
+      final String xid,
+      final String name,
+      final double lat,
+      final double lon,
+      final String category) {
     try {
       String url = String.format("%s/xid/%s?apikey=%s", BASE_URL, xid, apiKey);
       Map details = restTemplate.getForObject(url, Map.class);
@@ -140,7 +145,16 @@ public final class OpenTripMapClient {
         }
       }
       return new OpenTripMapPlace(
-          xid, name, lat, lon, rating, address, description, openingHoursText, scheduleUnknown);
+          xid,
+          name,
+          lat,
+          lon,
+          rating,
+          address,
+          description,
+          openingHoursText,
+          scheduleUnknown,
+          category);
 
     } catch (Exception e) {
       return null;
