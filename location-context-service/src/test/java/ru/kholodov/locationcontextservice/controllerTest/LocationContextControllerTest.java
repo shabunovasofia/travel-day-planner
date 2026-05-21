@@ -113,7 +113,8 @@ class LocationContextControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.error").exists());
+            .andExpect(jsonPath("$.errors[0].code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.errors[0].message").exists());
   }
 
   @Test
@@ -132,7 +133,8 @@ class LocationContextControllerTest {
                     .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest())
             // Проверяем, что ошибка содержит нужное сообщение (с учётом префикса поля)
-            .andExpect(jsonPath("$.error").value(
+            .andExpect(jsonPath("$.errors[0].code").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.errors[0].message").value(
                     "endTimeAfterStartTime: Время окончания должно быть позже времени начала"));
   }
 
@@ -155,6 +157,8 @@ class LocationContextControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.error").value("Не удалось найти координаты для адреса: Несуществующий адрес 12345"));
+            .andExpect(jsonPath("$.errors[0].code").value("ADDRESS_NOT_FOUND"))
+            .andExpect(jsonPath("$.errors[0].message").value(
+                    "Не удалось найти координаты для адреса: Несуществующий адрес 12345"));
   }
 }

@@ -35,6 +35,10 @@ public class IsochroneService {
 
     private final RestClient restClient;
 
+    /**
+     * @param builder общий {@link RestClient.Builder}
+     * @param props параметры доступа к ORS Isochrones (URL + API-ключ)
+     */
     public IsochroneService(RestClient.Builder builder, IsochroneProperties props) {
         this.restClient =
                 builder.baseUrl(props.getUrl())
@@ -98,7 +102,16 @@ public class IsochroneService {
         return Optional.empty();
     }
 
-    /** Вычисляет среднее расстояние от центра до точек изохроны по GeoJSON-ответу. */
+    /**
+     * Вычисляет среднее расстояние от центра до точек изохроны по GeoJSON-ответу.
+     *
+     * <p>Поддерживает геометрии {@code Polygon} и {@code MultiPolygon}. Расстояние считается
+     * формулой гаверсинусов от центра до каждой вершины внешнего кольца, затем усредняется.
+     *
+     * @param geoJson корневой узел GeoJSON-ответа ORS
+     * @param center координаты центра, от которого считается расстояние
+     * @return Optional со средним расстоянием в метрах, либо пустой при ошибке разбора
+     */
     private Optional<Double> extractAverageDistance(JsonNode geoJson, Coordinates center) {
         try {
             JsonNode features = geoJson.get("features");
@@ -157,7 +170,15 @@ public class IsochroneService {
         return Optional.empty();
     }
 
-    /** Формула гаверсинусов (результат в метрах). */
+    /**
+     * Формула гаверсинусов: расстояние между двумя точками на сфере Земли.
+     *
+     * @param lat1 широта первой точки
+     * @param lon1 долгота первой точки
+     * @param lat2 широта второй точки
+     * @param lon2 долгота второй точки
+     * @return расстояние в метрах
+     */
     private double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
         final double R = 6371000;
         double dLat = Math.toRadians(lat2 - lat1);

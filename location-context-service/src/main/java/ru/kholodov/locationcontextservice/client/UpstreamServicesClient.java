@@ -32,6 +32,14 @@ public class UpstreamServicesClient {
     private final RestClient placesClient;
     private final RestClient plannerClient;
 
+    /**
+     * Собирает два {@link RestClient}'а — для places-service и planner-service — с baseUrl из
+     * {@link IntegrationProperties}. Таймауты и перехватчики берутся из общего билдера, который
+     * настраивается в {@code AppConfig}.
+     *
+     * @param restClientBuilder общий {@link RestClient.Builder}
+     * @param props свойства интеграции (URL upstream-сервисов)
+     */
     public UpstreamServicesClient(
             RestClient.Builder restClientBuilder,
             IntegrationProperties props) {
@@ -99,6 +107,14 @@ public class UpstreamServicesClient {
         return response.getData();
     }
 
+    /**
+     * Срезает финальный {@code /} у URL, если он есть. Защита от двойных слэшей в путях.
+     * При пустом URL подставляется дефолт на localhost — это compile-time fallback, в проде
+     * {@link IntegrationProperties} требует {@code @NotBlank}.
+     *
+     * @param url исходный URL из конфига
+     * @return URL без завершающего слэша
+     */
     private static String trimSlash(String url) {
         if (url == null || url.isBlank()) return "http://localhost:8082";
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;

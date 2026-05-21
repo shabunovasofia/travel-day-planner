@@ -2,6 +2,7 @@ package ru.kholodov.locationcontextservice.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.kholodov.locationcontextservice.dto.ApiErrors;
 import ru.kholodov.locationcontextservice.dto.LocationContextRequest;
 import ru.kholodov.locationcontextservice.dto.planner.PlanBuildResponse;
 import ru.kholodov.locationcontextservice.services.LocationContextService;
@@ -43,8 +45,8 @@ public class LocationContextController {
     @Operation(
             summary = "Построить маршрут прогулки",
             description =
-                    "Геокодирует адрес, находит достопримечательности в радиусе пешей доступности " +
-                            "и строит оптимальное расписание посещения с учётом времени в пути и графика работы.")
+                    "Геокодирует адрес, находит достопримечательности в радиусе пешей доступности "
+                            + "и строит оптимальное расписание посещения с учётом времени в пути и графика работы.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
@@ -52,16 +54,69 @@ public class LocationContextController {
                     content = @Content(schema = @Schema(implementation = PlanBuildResponse.PlanData.class))),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Ошибка валидации запроса",
-                    content = @Content(schema = @Schema(example = "{\"error\": \"поле: сообщение\"}"))),
+                    description = "Ошибка валидации запроса или некорректный JSON",
+                    content = @Content(
+                            schema = @Schema(implementation = ApiErrors.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Validation error",
+                                            summary = "Валидация полей",
+                                            value = """
+                                                    {
+                                                      "errors": [
+                                                        {"code": "VALIDATION_ERROR", "message": "location: Адрес не может быть пустым"},
+                                                        {"code": "VALIDATION_ERROR", "message": "pace: Темп обязателен"}
+                                                      ]
+                                                    }"""),
+                                    @ExampleObject(
+                                            name = "Bad JSON",
+                                            summary = "Нечитаемый JSON",
+                                            value = """
+                                                    {
+                                                      "errors": [
+                                                        {"code": "BAD_REQUEST", "message": "JSON parse error: Cannot deserialize value of type int from String \\"abc\\""}
+                                                      ]
+                                                    }""")
+                            })),
             @ApiResponse(
                     responseCode = "404",
                     description = "Адрес не найден",
-                    content = @Content(schema = @Schema(example = "{\"error\": \"Адрес не найден\"}"))),
+                    content = @Content(
+                            schema = @Schema(implementation = ApiErrors.class),
+                            examples = @ExampleObject(
+                                    name = "Address not found",
+                                    value = """
+                                            {
+                                              "errors": [
+                                                {"code": "ADDRESS_NOT_FOUND", "message": "Не удалось найти координаты для адреса: ..."}
+                                              ]
+                                            }"""))),
+            @ApiResponse(
+                    responseCode = "504",
+                    description = "Таймаут или недоступность upstream-сервисов",
+                    content = @Content(
+                            schema = @Schema(implementation = ApiErrors.class),
+                            examples = @ExampleObject(
+                                    name = "Upstream unavailable",
+                                    value = """
+                                            {
+                                              "errors": [
+                                                {"code": "UPSTREAM_UNAVAILABLE", "message": "Сервис временно недоступен. Попробуйте позже."}
+                                              ]
+                                            }"""))),
             @ApiResponse(
                     responseCode = "500",
                     description = "Внутренняя ошибка сервера",
-                    content = @Content(schema = @Schema(example = "{\"error\": \"Internal error\"}")))
+                    content = @Content(
+                            schema = @Schema(implementation = ApiErrors.class),
+                            examples = @ExampleObject(
+                                    name = "Internal error",
+                                    value = """
+                                            {
+                                              "errors": [
+                                                {"code": "INTERNAL_ERROR", "message": "Внутренняя ошибка сервера"}
+                                              ]
+                                            }""")))
     })
     @PostMapping("/build")
     public PlanBuildResponse.PlanData buildRoute(

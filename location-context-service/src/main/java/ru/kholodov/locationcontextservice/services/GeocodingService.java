@@ -33,6 +33,10 @@ public class GeocodingService {
 
     private final RestClient restClient;
 
+    /**
+     * @param builder общий {@link RestClient.Builder} (с таймаутами/перехватчиками)
+     * @param props параметры доступа к LocationIQ (URL + API-ключ)
+     */
     public GeocodingService(RestClient.Builder builder, GeocodingProperties props) {
         String baseUrl =
                 UriComponentsBuilder.fromUriString(props.getUrl())

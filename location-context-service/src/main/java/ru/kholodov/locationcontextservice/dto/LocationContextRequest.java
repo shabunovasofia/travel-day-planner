@@ -39,7 +39,14 @@ public class LocationContextRequest {
     @Schema(description = "Темп прогулки", example = "MEDIUM", allowableValues = {"SLOW", "MEDIUM", "FAST"})
     private Pace pace;
 
-    /** Проверяет, что время окончания позже времени начала. */
+    /**
+     * Cross-field валидация: время окончания строго позже времени начала.
+     *
+     * <p>Возвращает {@code true} при {@code null}-полях, чтобы не дублировать сообщение
+     * с уже сработавшим {@code @NotNull}.
+     *
+     * @return {@code true}, если интервал валидный или одно из полей ещё не заполнено
+     */
     @AssertTrue(message = "Время окончания должно быть позже времени начала")
     public boolean isEndTimeAfterStartTime() {
         if (startTime == null || endTime == null) {

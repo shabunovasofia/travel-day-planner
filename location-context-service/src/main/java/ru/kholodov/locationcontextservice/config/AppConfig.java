@@ -49,6 +49,13 @@ public class AppConfig {
         return builder -> builder.requestFactory(factory).requestInterceptor(loggingInterceptor());
     }
 
+    /**
+     * Перехватчик для DEBUG-логирования каждого исходящего HTTP-запроса.
+     *
+     * <p>В URL маскируется query-параметр {@code key=...}, чтобы API-ключи не попадали в логи.
+     *
+     * @return {@link ClientHttpRequestInterceptor} для регистрации в {@code RestClient.Builder}
+     */
     private ClientHttpRequestInterceptor loggingInterceptor() {
         return (request, body, execution) -> {
             var log = LoggerFactory.getLogger("HTTP");
