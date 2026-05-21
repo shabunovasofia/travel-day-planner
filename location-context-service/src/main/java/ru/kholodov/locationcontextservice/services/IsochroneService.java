@@ -1,17 +1,19 @@
 package ru.kholodov.locationcontextservice.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import ru.kholodov.locationcontextservice.config.IsochroneProperties;
 import ru.kholodov.locationcontextservice.dto.Coordinates;
 import ru.kholodov.locationcontextservice.enums.Pace;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Сервис расчёта радиуса пешеходной доступности через OpenRouteService Isochrones API.
@@ -20,12 +22,16 @@ import java.util.Optional;
  * вызове {@link #calculateRadius} передаются только изменяемые параметры: координаты, время,
  * темп. Результатом является среднее расстояние (в метрах) от центра до точек изохроны,
  * рассчитанное по формуле гаверсинусов.
+ *
+ * <p>Транзиентные ошибки (5xx, таймауты сети) обрабатываются Resilience4j. Бизнес-ошибки (4xx) и
+ * ошибки разбора ответа не ретраятся — возвращается {@link Optional#empty()}.
  */
 @Slf4j
 @Service
 public class IsochroneService {
 
     private static final double STANDARD_SPEED_KMH = 5.0;
+    private static final String RESILIENCE_NAME = "isochrone";
 
     private final RestClient restClient;
 
@@ -48,6 +54,8 @@ public class IsochroneService {
      * @param pace темп прогулки
      * @return Optional со средним радиусом в метрах, либо пустой Optional при ошибке
      */
+    @Retry(name = RESILIENCE_NAME)
+    @CircuitBreaker(name = RESILIENCE_NAME, fallbackMethod = "calculateRadiusFallback")
     public Optional<Double> calculateRadius(Coordinates center, double availableHours, Pace pace) {
         long rangeSeconds = (long) (availableHours * 3600 * pace.speedKmh / STANDARD_SPEED_KMH);
         if (rangeSeconds < 60) {
@@ -55,6 +63,7 @@ public class IsochroneService {
             return Optional.empty();
         }
 
+        JsonNode response;
         try {
             Map<String, Object> body =
                     Map.of(
@@ -63,7 +72,7 @@ public class IsochroneService {
 
             log.debug("Запрос изохроны (POST) для координат: {},{}", center.lat(), center.lon());
 
-            JsonNode response =
+            response =
                     restClient
                             .post()
                             .contentType(MediaType.APPLICATION_JSON)
@@ -71,13 +80,21 @@ public class IsochroneService {
                             .body(body)
                             .retrieve()
                             .body(JsonNode.class);
-
-            if (response != null) {
-                return extractAverageDistance(response, center);
-            }
-        } catch (Exception e) {
-            log.error("Ошибка при вызове ORS Isochrones API: {}", e.getMessage(), e);
+        } catch (HttpClientErrorException e) {
+            log.warn("ORS Isochrones 4xx {}: запрос не будет ретраиться", e.getStatusCode());
+            return Optional.empty();
         }
+
+        if (response == null) {
+            return Optional.empty();
+        }
+        return extractAverageDistance(response, center);
+    }
+
+    @SuppressWarnings("unused")
+    private Optional<Double> calculateRadiusFallback(
+            Coordinates center, double availableHours, Pace pace, Throwable t) {
+        log.error("Isochrone fallback (CB open / retries exhausted): {}", t.toString());
         return Optional.empty();
     }
 

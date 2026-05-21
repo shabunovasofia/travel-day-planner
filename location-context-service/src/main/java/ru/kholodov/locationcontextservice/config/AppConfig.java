@@ -1,12 +1,14 @@
 package ru.kholodov.locationcontextservice.config;
 
+import java.net.http.HttpClient;
+import java.time.Duration;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 
 /**
  * Конфигурационный класс приложения.
@@ -15,6 +17,9 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
  * {@link RestClientCustomizer}: устанавливает таймауты подключения/чтения и перехватчик для
  * логирования HTTP-запросов. API-ключи маскируются в логах. Каждый сервис инжектирует
  * {@code RestClient.Builder} и строит собственный клиент с нужным baseUrl и заголовками.
+ *
+ * <p>В качестве транспорта используется Java 21 {@link HttpClient} (через
+ * {@link JdkClientHttpRequestFactory}) — встроенный пул соединений, HTTP/2 по умолчанию.
  *
  * @author Stepan Kholodov
  */
@@ -33,14 +38,16 @@ public class AppConfig {
      */
     @Bean
     public RestClientCustomizer restClientCustomizer() {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(connectTimeoutMs);
-        factory.setReadTimeout(readTimeoutMs);
+        HttpClient httpClient =
+                HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofMillis(connectTimeoutMs))
+                        .build();
+
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+        factory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
 
         return builder -> builder.requestFactory(factory).requestInterceptor(loggingInterceptor());
     }
-
-
 
     private ClientHttpRequestInterceptor loggingInterceptor() {
         return (request, body, execution) -> {
@@ -53,6 +60,4 @@ public class AppConfig {
             return resp;
         };
     }
-
-
 }

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 import ru.kholodov.locationcontextservice.config.IsochroneProperties;
 import ru.kholodov.locationcontextservice.dto.Coordinates;
@@ -14,6 +15,7 @@ import ru.kholodov.locationcontextservice.services.IsochroneService;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -64,16 +66,20 @@ class IsochroneServiceTest {
     }
 
     @Test
-    void calculateRadius_ShouldReturnEmpty_WhenApiReturnsError() {
+    void calculateRadius_ShouldPropagate5xx_ForRetryHandling() {
+        // 5xx больше не глотается внутри сервиса — пробрасывается наружу,
+        // чтобы Resilience4j (@Retry / @CircuitBreaker) мог среагировать.
+        // Fallback вернёт Optional.empty() уже на уровне Spring-прокси.
         mockServer
                 .expect(requestTo(containsString("openrouteservice.org")))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withServerError());
 
-        Optional<Double> result =
-                isochroneService.calculateRadius(new Coordinates(55.755, 37.615), 2.0, Pace.SLOW);
-
-        assertThat(result).isEmpty();
+        assertThatThrownBy(
+                        () ->
+                                isochroneService.calculateRadius(
+                                        new Coordinates(55.755, 37.615), 2.0, Pace.SLOW))
+                .isInstanceOf(HttpServerErrorException.class);
         mockServer.verify();
     }
 
