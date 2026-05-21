@@ -1,5 +1,10 @@
 package com.travelplanner.planner;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -7,28 +12,24 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @SpringBootTest
 @AutoConfigureMockMvc
 class PlannerControllerTest {
 
-	@Autowired
-	private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-	@Test
-	void healthReturnsOkWithStatus() throws Exception {
-		mockMvc.perform(get("/api/v1/plan/health"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.status").value("ok"));
-	}
+  @Test
+  void healthReturnsOkWithStatus() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/plan/health"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("ok"));
+  }
 
-	@Test
-	void buildReturnsOkWithNonEmptyItems() throws Exception {
-		String body = """
+  @Test
+  void buildReturnsOkWithNonEmptyItems() throws Exception {
+    String body =
+        """
 				{
 				  "startTime": "10:00",
 				  "endTime": "18:00",
@@ -46,36 +47,38 @@ class PlannerControllerTest {
 				  ]
 				}
 				""";
-		mockMvc.perform(post("/api/v1/plan/build")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(body))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.items").isArray())
-				.andExpect(jsonPath("$.items.length()").value(1))
-				.andExpect(jsonPath("$.totalPlaces").value(1))
-				.andExpect(jsonPath("$.warnings").isArray())
-				.andExpect(jsonPath("$.evaluatedOrderings").value(1));
-	}
+    mockMvc
+        .perform(post("/api/v1/plan/build").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items").isArray())
+        .andExpect(jsonPath("$.data.items.length()").value(1))
+        .andExpect(jsonPath("$.data.items[0].travelTimeMinutes").value(0))
+        .andExpect(jsonPath("$.data.totalPlaces").value(1))
+        .andExpect(jsonPath("$.data.warnings").isArray())
+        .andExpect(jsonPath("$.data.evaluatedOrderings").value(1));
+  }
 
-	@Test
-	void buildShouldReturn400WhenPlacesEmpty() throws Exception {
-		String body = """
+  @Test
+  void buildShouldReturn400WhenPlacesEmpty() throws Exception {
+    String body =
+        """
 				{
 				  "startTime": "10:00",
 				  "endTime": "18:00",
 				  "places": []
 				}
 				""";
-		mockMvc.perform(post("/api/v1/plan/build")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(body))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.error").exists());
-	}
+    mockMvc
+        .perform(post("/api/v1/plan/build").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors[0].code").value("VALIDATION_ERROR"))
+        .andExpect(jsonPath("$.errors[0].message").exists());
+  }
 
-	@Test
-	void buildShouldWarnWhenPlaceDoesNotFit() throws Exception {
-		String body = """
+  @Test
+  void buildShouldWarnWhenPlaceDoesNotFit() throws Exception {
+    String body =
+        """
 				{
 				  "startTime": "10:00",
 				  "endTime": "11:00",
@@ -91,18 +94,18 @@ class PlannerControllerTest {
 				  }]
 				}
 				""";
-		mockMvc.perform(post("/api/v1/plan/build")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(body))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.items").isEmpty())
-				.andExpect(jsonPath("$.warnings").isNotEmpty())
-				.andExpect(jsonPath("$.evaluatedOrderings").value(1));
-	}
+    mockMvc
+        .perform(post("/api/v1/plan/build").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items").isEmpty())
+        .andExpect(jsonPath("$.data.warnings").isNotEmpty())
+        .andExpect(jsonPath("$.data.evaluatedOrderings").value(1));
+  }
 
-	@Test
-	void buildShouldReturn400WhenTimeFormatInvalid() throws Exception {
-		String body = """
+  @Test
+  void buildShouldReturn400WhenTimeFormatInvalid() throws Exception {
+    String body =
+        """
 				{
 				  "startTime": "утро",
 				  "endTime": "вечер",
@@ -118,16 +121,17 @@ class PlannerControllerTest {
 				  }]
 				}
 				""";
-		mockMvc.perform(post("/api/v1/plan/build")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(body))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.error").exists());
-	}
+    mockMvc
+        .perform(post("/api/v1/plan/build").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors[0].code").value("VALIDATION_ERROR"))
+        .andExpect(jsonPath("$.errors[0].message").exists());
+  }
 
-	@Test
-	void buildShouldScheduleSeveralPlacesWithDifferentDurations() throws Exception {
-		String body = """
+  @Test
+  void buildShouldScheduleSeveralPlacesWithDifferentDurations() throws Exception {
+    String body =
+        """
 				{
 				  "startTime": "09:00",
 				  "endTime": "14:00",
@@ -165,19 +169,52 @@ class PlannerControllerTest {
 				  ]
 				}
 				""";
-		mockMvc.perform(post("/api/v1/plan/build")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(body))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.items.length()").value(3))
-				.andExpect(jsonPath("$.items[0].arrivalTime").value("09:00"))
-				.andExpect(jsonPath("$.items[0].departureTime").value("10:30"))
-				.andExpect(jsonPath("$.items[1].arrivalTime").value("10:30"))
-				.andExpect(jsonPath("$.items[1].departureTime").value("11:15"))
-				.andExpect(jsonPath("$.items[2].arrivalTime").value("11:15"))
-				.andExpect(jsonPath("$.items[2].departureTime").value("13:15"))
-				.andExpect(jsonPath("$.totalHours").value(4.25))
-				.andExpect(jsonPath("$.warnings").isEmpty())
-				.andExpect(jsonPath("$.evaluatedOrderings").value(6));
-	}
+    mockMvc
+        .perform(post("/api/v1/plan/build").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items.length()").value(3))
+        .andExpect(jsonPath("$.data.items[0].arrivalTime").value("09:00"))
+        .andExpect(jsonPath("$.data.items[0].departureTime").value("10:30"))
+        .andExpect(jsonPath("$.data.items[0].travelTimeMinutes").value(0))
+        .andExpect(jsonPath("$.data.items[1].arrivalTime").value("10:46"))
+        .andExpect(jsonPath("$.data.items[1].departureTime").value("11:31"))
+        .andExpect(jsonPath("$.data.items[1].travelTimeMinutes").value(16))
+        .andExpect(jsonPath("$.data.items[2].arrivalTime").value("11:45"))
+        .andExpect(jsonPath("$.data.items[2].departureTime").value("13:45"))
+        .andExpect(jsonPath("$.data.items[2].travelTimeMinutes").value(14))
+        .andExpect(jsonPath("$.data.totalHours").value(4.25))
+        .andExpect(jsonPath("$.data.warnings").isEmpty())
+        .andExpect(jsonPath("$.data.evaluatedOrderings").value(6));
+  }
+
+  @Test
+  void buildShouldIncludeWalkingTimeFromStartCoordinates() throws Exception {
+    String body =
+        """
+				{
+				  "startTime": "10:00",
+				  "endTime": "12:00",
+				  "startLatitude": 55.7500,
+				  "startLongitude": 37.6000,
+				  "places": [{
+				    "placeId": "nearby",
+				    "name": "Ближайшее место",
+				    "category": "park",
+				    "latitude": 55.7500,
+				    "longitude": 37.6000,
+				    "estimatedHours": 1.0,
+				    "description": "",
+				    "rating": 4.0,
+				    "openingHoursText": "09:00-21:00"
+				  }]
+				}
+				""";
+    mockMvc
+        .perform(post("/api/v1/plan/build").contentType(MediaType.APPLICATION_JSON).content(body))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items.length()").value(1))
+        .andExpect(jsonPath("$.data.items[0].arrivalTime").value("10:00"))
+        .andExpect(jsonPath("$.data.items[0].departureTime").value("11:00"))
+        .andExpect(jsonPath("$.data.items[0].travelTimeMinutes").value(0));
+  }
 }
