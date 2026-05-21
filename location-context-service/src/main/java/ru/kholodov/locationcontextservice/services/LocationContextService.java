@@ -31,7 +31,6 @@ import java.util.List;
 public class LocationContextService {
 
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
-    private static final List<String> DEFAULT_CATEGORIES = List.of();
 
     private final GeocodingService geocodingService;
     private final IsochroneService isochroneService;
@@ -61,7 +60,6 @@ public class LocationContextService {
                 .longitude(coordinates.lon())
                 .radiusMeters(radiusMeters)
                 .availableHours(availableHours)
-                .categories(DEFAULT_CATEGORIES)
                 .build();
         List<PlacesSearchResponse.PlaceDto> places = upstreamClient.searchPlaces(placesRequest);
 

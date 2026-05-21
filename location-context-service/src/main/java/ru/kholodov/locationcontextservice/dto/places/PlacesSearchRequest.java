@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.util.List;
 
 /**
  * DTO запроса к {@code POST /api/v1/places/search} (places-service).
@@ -18,5 +17,4 @@ public class PlacesSearchRequest {
     private double longitude;
     private int radiusMeters;
     private double availableHours;
-    private List<String> categories;
 }
