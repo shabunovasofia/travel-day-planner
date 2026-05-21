@@ -1,13 +1,5 @@
 package ru.kholodov.locationcontextservice.serviceTest;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalTime;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +13,15 @@ import ru.kholodov.locationcontextservice.exception.AddressNotFoundException;
 import ru.kholodov.locationcontextservice.services.GeocodingService;
 import ru.kholodov.locationcontextservice.services.IsochroneService;
 import ru.kholodov.locationcontextservice.services.LocationContextService;
+
+import java.time.LocalTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LocationContextServiceTest {

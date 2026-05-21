@@ -40,6 +40,8 @@ public class AppConfig {
         return builder -> builder.requestFactory(factory).requestInterceptor(loggingInterceptor());
     }
 
+
+
     private ClientHttpRequestInterceptor loggingInterceptor() {
         return (request, body, execution) -> {
             var log = LoggerFactory.getLogger("HTTP");
@@ -51,4 +53,6 @@ public class AppConfig {
             return resp;
         };
     }
+
+
 }
