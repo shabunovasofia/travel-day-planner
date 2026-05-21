@@ -10,6 +10,8 @@ services:
     build: ./planner-service
     ports:
       - "8083:8083"
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
     depends_on:
       - places-service
 
