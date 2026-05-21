@@ -18,11 +18,11 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "geocoding")
 public class GeocodingProperties {
 
-    /** URL эндпоинта API геокодирования. */
-    @NotBlank(message = "geocoding.url не задан")
-    private String url;
+  /** URL эндпоинта API геокодирования. */
+  @NotBlank(message = "geocoding.url не задан")
+  private String url;
 
-    /** API-ключ для авторизации в LocationIQ. */
-    @NotBlank(message = "geocoding.api-key не задан (переменная окружения GEOCODING_API_KEY)")
-    private String apiKey;
+  /** API-ключ для авторизации в LocationIQ. */
+  @NotBlank(message = "geocoding.api-key не задан (переменная окружения GEOCODING_API_KEY)")
+  private String apiKey;
 }

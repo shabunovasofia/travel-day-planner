@@ -3,8 +3,8 @@ package ru.kholodov.locationcontextservice.enums;
 /**
  * Темп прогулки.
  *
- * <p>Каждое значение несёт в себе скорость ходьбы в км/ч, которая используется при расчёте
- * изохроны и fallback-радиуса:
+ * <p>Каждое значение несёт в себе скорость ходьбы в км/ч, которая используется при расчёте изохроны
+ * и fallback-радиуса:
  *
  * <ul>
  *   <li>{@code SLOW} — медленный (~3.5 км/ч)
@@ -13,14 +13,14 @@ package ru.kholodov.locationcontextservice.enums;
  * </ul>
  */
 public enum Pace {
-    SLOW(3.5),
-    MEDIUM(5.0),
-    FAST(6.5);
+  SLOW(3.5),
+  MEDIUM(5.0),
+  FAST(6.5);
 
-    /** Скорость ходьбы в км/ч для данного темпа. */
-    public final double speedKmh;
+  /** Скорость ходьбы в км/ч для данного темпа. */
+  public final double speedKmh;
 
-    Pace(double speedKmh) {
-        this.speedKmh = speedKmh;
-    }
+  Pace(double speedKmh) {
+    this.speedKmh = speedKmh;
+  }
 }

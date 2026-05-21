@@ -18,11 +18,11 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "isochrone")
 public class IsochroneProperties {
 
-    /** URL эндпоинта API изохрон. */
-    @NotBlank(message = "isochrone.url не задан")
-    private String url;
+  /** URL эндпоинта API изохрон. */
+  @NotBlank(message = "isochrone.url не задан")
+  private String url;
 
-    /** API-ключ для авторизации в OpenRouteService. */
-    @NotBlank(message = "isochrone.api-key не задан (переменная окружения ISOCHRONE_API_KEY)")
-    private String apiKey;
+  /** API-ключ для авторизации в OpenRouteService. */
+  @NotBlank(message = "isochrone.api-key не задан (переменная окружения ISOCHRONE_API_KEY)")
+  private String apiKey;
 }

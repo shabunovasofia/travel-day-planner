@@ -55,3 +55,9 @@ pagefile.sys
 *.swo
 *~
 application-local.properties
+
+### Секреты ###
+# Не коммитим реальные ключи. Шаблон лежит в .env.example.
+.env
+.env.local
+!.env.example

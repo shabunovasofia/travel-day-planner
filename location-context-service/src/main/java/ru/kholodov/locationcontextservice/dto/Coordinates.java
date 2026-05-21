@@ -6,5 +6,4 @@ package ru.kholodov.locationcontextservice.dto;
  * @param lat широта
  * @param lon долгота
  */
-public record Coordinates(double lat, double lon) {
-}
+public record Coordinates(double lat, double lon) {}
