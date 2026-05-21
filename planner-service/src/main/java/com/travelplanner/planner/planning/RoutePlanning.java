@@ -183,7 +183,14 @@ public final class RoutePlanning {
 
   private static int scoreSchedule(ScheduleOutcome outcome, List<PlaceDto> allPlaces) {
     double ratingSum = 0.0;
+    int consecutiveFoodPenalty = 0;
+    String prevCategory = null;
     for (PlanItem item : outcome.items()) {
+      String cat = item.category();
+      if (isFoodCategory(cat) && isFoodCategory(prevCategory)) {
+        consecutiveFoodPenalty += 500_000;
+      }
+      prevCategory = cat;
       for (PlaceDto p : allPlaces) {
         if (p.getPlaceId() != null && p.getPlaceId().equals(item.placeId())) {
           if (p.getRating() != null) {
@@ -193,7 +200,14 @@ public final class RoutePlanning {
         }
       }
     }
-    return outcome.items().size() * 1_000_000 + (int) Math.round(ratingSum * 1_000.0);
+    return outcome.items().size() * 1_000_000
+        + (int) Math.round(ratingSum * 1_000.0)
+        - consecutiveFoodPenalty;
+  }
+
+  private static boolean isFoodCategory(String category) {
+    return category != null
+        && (category.equalsIgnoreCase("cafe") || category.equalsIgnoreCase("restaurant"));
   }
 
   private static final Comparator<PlaceDto> RANKING_COMPARATOR =
