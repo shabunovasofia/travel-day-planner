@@ -1,6 +1,8 @@
 package ru.kholodov.locationcontextservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -16,33 +18,33 @@ import ru.kholodov.locationcontextservice.enums.Pace;
  * прогулочного маршрута.
  */
 @Data
+@Schema(description = "Параметры запроса для расчёта контекста прогулки")
 public class LocationContextRequest {
 
-    /**
-     * Текстовый адрес (например, "Арбат, Москва"), который будет преобразован в координаты. Не может
-     * быть пустым или состоять только из пробелов.
-     */
     @NotBlank(message = "Адрес не может быть пустым")
+    @Schema(description = "Адрес в свободной форме", example = "Арбат, Москва")
     private String location;
 
-    /**
-     * Время начала прогулки в формате "HH:mm" (например, "10:00"). Поле обязательно для заполнения.
-     */
     @NotNull(message = "Укажите время начала")
     @JsonFormat(pattern = "HH:mm")
+    @Schema(description = "Время начала прогулки (HH:mm)", example = "10:00", type = "string")
     private LocalTime startTime;
 
-    /**
-     * Время окончания прогулки в формате "HH:mm" (например, "16:00"). Поле обязательно для
-     * заполнения.
-     */
     @NotNull(message = "Укажите время окончания")
     @JsonFormat(pattern = "HH:mm")
+    @Schema(description = "Время окончания прогулки (HH:mm)", example = "16:00", type = "string")
     private LocalTime endTime;
 
-    /**
-     * Темп прогулки: SLOW, MEDIUM или FAST. Влияет на радиус поиска интересных мест.
-     */
     @NotNull(message = "Темп обязателен")
+    @Schema(description = "Темп прогулки", example = "MEDIUM", allowableValues = {"SLOW", "MEDIUM", "FAST"})
     private Pace pace;
+
+    /** Проверяет, что время окончания позже времени начала. */
+    @AssertTrue(message = "Время окончания должно быть позже времени начала")
+    public boolean isEndTimeAfterStartTime() {
+        if (startTime == null || endTime == null) {
+            return true;
+        }
+        return endTime.isAfter(startTime);
+    }
 }

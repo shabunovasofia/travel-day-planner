@@ -1,87 +1,106 @@
 package ru.kholodov.locationcontextservice.services;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.kholodov.locationcontextservice.client.UpstreamServicesClient;
 import ru.kholodov.locationcontextservice.dto.Coordinates;
 import ru.kholodov.locationcontextservice.dto.LocationContextRequest;
-import ru.kholodov.locationcontextservice.dto.LocationContextResponse;
+import ru.kholodov.locationcontextservice.dto.places.PlacesSearchRequest;
+import ru.kholodov.locationcontextservice.dto.places.PlacesSearchResponse;
+import ru.kholodov.locationcontextservice.dto.planner.PlanBuildRequest;
+import ru.kholodov.locationcontextservice.dto.planner.PlanBuildResponse;
+import ru.kholodov.locationcontextservice.enums.Pace;
 import ru.kholodov.locationcontextservice.exception.AddressNotFoundException;
 
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 /**
- * Основной сервис для получения контекста прогулки.
+ * Сервис оркестрации для построения готового маршрута прогулки.
  *
- * <p>Объединяет геокодирование адреса, вычисление доступного времени и
- * определение радиуса пешеходной доступности через изохронный сервис.
- * При недоступности изохрон используется fallback-расчёт на основе
- * средней скорости ходьбы (5 км/ч).
+ * <p>Внутренне выполняет: геокодирование → изохрону → поиск мест → планирование,
+ * но возвращает клиенту только финальный план посещения.
+ *
+ * @author Stepan Kholodov
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class LocationContextService {
 
-    private static final Logger logger = LoggerFactory.getLogger(LocationContextService.class);
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
     private final GeocodingService geocodingService;
     private final IsochroneService isochroneService;
+    private final UpstreamServicesClient upstreamClient;
 
-    private static final double DEFAULT_WALKING_SPEED_KMH = 5.0;
+    /**
+     * Строит готовый маршрут прогулки по заданным параметрам.
+     *
+     * @param request запрос с адресом, временем и темпом
+     * @return готовый план с расписанием посещения мест
+     * @throws AddressNotFoundException если адрес не найден
+     * @throws IllegalStateException если не удалось построить план
+     */
+    public PlanBuildResponse.PlanData buildRoute(LocationContextRequest request) {
+        // 1. Геокодирование адреса
+        Coordinates coordinates = geocodingService.geocode(request.getLocation())
+                .orElseThrow(() -> new AddressNotFoundException(
+                        "Не удалось найти координаты для адреса: " + request.getLocation()));
 
-    public LocationContextService(
-            GeocodingService geocodingService, IsochroneService isochroneService) {
-        this.geocodingService = geocodingService;
-        this.isochroneService = isochroneService;
+        // 2. Расчёт доступного времени и радиуса
+        double availableHours = Duration.between(request.getStartTime(), request.getEndTime()).toMinutes() / 60.0;
+        int radiusMeters = calculateRadius(coordinates, availableHours, request.getPace());
+
+        // 3. Поиск мест через places-service
+        var placesRequest = PlacesSearchRequest.builder()
+                .latitude(coordinates.lat())
+                .longitude(coordinates.lon())
+                .radiusMeters(radiusMeters)
+                .availableHours(availableHours)
+                .build();
+        List<PlacesSearchResponse.PlaceDto> places = upstreamClient.searchPlaces(placesRequest);
+
+        if (places.isEmpty()) {
+            log.warn("Не найдено мест для адреса: {}", request.getLocation());
+            // Возвращаем пустой план, если мест нет
+            return new PlanBuildResponse.PlanData(List.of(), 0, 0.0,
+                    List.of("По заданным параметрам не найдено подходящих мест"), 0);
+        }
+
+        // 4. Построение плана через planner-service
+        var planRequest = PlanBuildRequest.builder()
+                .startTime(request.getStartTime().format(TIME_FORMAT))
+                .endTime(request.getEndTime().format(TIME_FORMAT))
+                .places(places)
+                .startLatitude(coordinates.lat())
+                .startLongitude(coordinates.lon())
+                .build();
+
+        PlanBuildResponse.PlanData planData = upstreamClient.buildPlan(planRequest);
+
+        log.info("Построен маршрут: {} мест, общее время: {} ч",
+                planData.getTotalPlaces(), planData.getTotalHours());
+
+        // 5. Возврат только плана
+        return planData;
     }
 
     /**
-     * Выполняет полный анализ контекста прогулки по заданному запросу.
+     * Рассчитывает радиус пешеходной доступности.
      *
-     * <p>Шаги:
-     * <ol>
-     *   <li>Геокодирование адреса в координаты</li>
-     *   <li>Вычисление доступного времени в часах</li>
-     *   <li>Расчёт радиуса доступности через изохрону или fallback-формулу</li>
-     * </ol>
-     *
-     * @param request запрос с адресом, временем и темпом
-     * @return ответ с координатами, радиусом и временными рамками
-     * @throws AddressNotFoundException если адрес не удалось геокодировать
+     * <p>Приоритет: изохрона через OpenRouteService → fallback на линейную формулу.
      */
-    public LocationContextResponse getLocation(LocationContextRequest request) {
-        String address = request.getLocation();
-
-        // 1. Геокодирование
-        Coordinates coordinates =
-                geocodingService
-                        .geocode(address)
-                        .orElseThrow(
-                                () ->
-                                        new AddressNotFoundException(
-                                                "Не удалось найти координаты для адреса: " + address));
-
-        double availableHours =
-                java.time.Duration.between(request.getStartTime(), request.getEndTime()).toMinutes() / 60.0;
-
-        int radiusMeters =
-                isochroneService
-                        .calculateRadius(coordinates, availableHours, request.getPace())
-                        .map(d -> (int) Math.round(d))
-                        .orElseGet(
-                                () -> {
-                                    // Fallback: радиус = (доступное время * скорость) / 2 (туда‑обратно)
-                                    double maxDistanceKm = availableHours * DEFAULT_WALKING_SPEED_KMH / 2.0;
-                                    int fallbackRadius = (int) (maxDistanceKm * 1000);
-                                    logger.warn(
-                                            "Изохрона недоступна. fallback-радиус: {} м", fallbackRadius);
-                                    return fallbackRadius;
-                                });
-
-        return LocationContextResponse.create(
-                address,
-                coordinates.lat(),
-                coordinates.lon(),
-                radiusMeters,
-                request.getStartTime(),
-                request.getEndTime(),
-                request.getPace());
+    private int calculateRadius(Coordinates center, double availableHours, Pace pace) {
+        return isochroneService.calculateRadius(center, availableHours, pace)
+                .map(d -> (int) Math.round(d))
+                .orElseGet(() -> {
+                    double maxDistanceKm = availableHours * pace.speedKmh / 2.0;
+                    int fallback = (int) (maxDistanceKm * 1000);
+                    log.warn("Изохрона недоступна. Fallback-радиус: {} м", fallback);
+                    return fallback;
+                });
     }
 }
