@@ -50,22 +50,26 @@ public class PlacesService {
    */
   public PlacesSearchResponse search(final PlacesSearchRequest request) {
     List<String> categories = resolveCategories(request.getCategories());
-    List<PlaceDto> candidates = new ArrayList<>();
 
-    for (String category : categories) {
-      String osmFilter = CategoryMapper.toKinds(category);
-      double estimatedHours = estimatedHoursByCategory(category);
+    String allKinds =
+        categories.stream()
+            .map(CategoryMapper::toKinds)
+            .collect(java.util.stream.Collectors.joining(","));
 
-      List<OpenTripMapPlace> foundPlaces =
-          openTripMapClient.findPlaces(
-              request.getLatitude(), request.getLongitude(), request.getRadiusMeters(), osmFilter);
+    List<OpenTripMapPlace> foundPlaces =
+        openTripMapClient.findPlaces(
+            request.getLatitude(), request.getLongitude(), request.getRadiusMeters(), allKinds);
 
-      for (OpenTripMapPlace place : foundPlaces) {
-        candidates.add(mapToPlaceDto(place, category, estimatedHours));
-      }
-    }
+    List<PlaceDto> candidates =
+        foundPlaces.stream()
+            .map(
+                place -> {
+                  String category = place.category() != null ? place.category() : "other";
+                  return mapToPlaceDto(place, category, estimatedHoursByCategory(category));
+                })
+            .toList();
 
-    List<PlaceDto> uniqueCandidates = removeDuplicates(candidates);
+    List<PlaceDto> uniqueCandidates = removeDuplicates(new ArrayList<>(candidates));
     uniqueCandidates.sort(byRatingDesc());
 
     return new PlacesSearchResponse(uniqueCandidates, uniqueCandidates.size());
