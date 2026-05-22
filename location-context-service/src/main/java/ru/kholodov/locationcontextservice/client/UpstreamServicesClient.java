@@ -112,7 +112,9 @@ public class UpstreamServicesClient {
    * @return URL без завершающего слэша
    */
   private static String trimSlash(String url) {
-    if (url == null || url.isBlank()) return "http://localhost:8082";
+    if (url == null || url.isBlank()) {
+      return "http://localhost:8082";
+    }
     return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
   }
 }

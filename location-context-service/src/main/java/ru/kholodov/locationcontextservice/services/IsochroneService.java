@@ -35,6 +35,7 @@ import ru.kholodov.locationcontextservice.enums.Pace;
 public class IsochroneService {
 
   private static final double STANDARD_SPEED_KMH = 5.0;
+  private static final double EARTH_RADIUS_M = 6_371_000.0;
   private static final String RESILIENCE_NAME = "isochrone";
 
   private final RestClient restClient;
@@ -60,11 +61,13 @@ public class IsochroneService {
    * @param pace темп прогулки
    * @return Optional со средним радиусом в метрах, либо пустой Optional при ошибке
    */
-  @Cacheable(value = "isochrone", key = "#center.lat() + ',' + #center.lon() + ':' + #availableHours + ':' + #pace")
+  @Cacheable(
+      value = "isochrone",
+      key = "#center.lat() + ',' + #center.lon() + ':' + #availableHours + ':' + #pace")
   @Retry(name = RESILIENCE_NAME)
   @CircuitBreaker(name = RESILIENCE_NAME, fallbackMethod = "calculateRadiusFallback")
   public Optional<Double> calculateRadius(Coordinates center, double availableHours, Pace pace) {
-    long rangeSeconds = (long) (availableHours * 3600 * pace.speedKmh / STANDARD_SPEED_KMH);
+    long rangeSeconds = (long) (availableHours * 3600 * pace.getSpeedKmh() / STANDARD_SPEED_KMH);
     if (rangeSeconds < 60) {
       log.warn("Слишком маленькое скорректированное время: {} секунд", rangeSeconds);
       return Optional.empty();
@@ -128,9 +131,13 @@ public class IsochroneService {
 
       for (JsonNode feature : features) {
         JsonNode geometry = feature.get("geometry");
-        if (geometry == null) continue;
+        if (geometry == null) {
+          continue;
+        }
         JsonNode coordinates = geometry.get("coordinates");
-        if (coordinates == null) continue;
+        if (coordinates == null) {
+          continue;
+        }
 
         String type = geometry.get("type").asText();
         if ("Polygon".equals(type)) {
@@ -179,7 +186,6 @@ public class IsochroneService {
    * @return расстояние в метрах
    */
   private double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
-    final double R = 6371000;
     double dLat = Math.toRadians(lat2 - lat1);
     double dLon = Math.toRadians(lon2 - lon1);
     double a =
@@ -189,6 +195,6 @@ public class IsochroneService {
                 * Math.sin(dLon / 2)
                 * Math.sin(dLon / 2);
     double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    return EARTH_RADIUS_M * c;
   }
 }

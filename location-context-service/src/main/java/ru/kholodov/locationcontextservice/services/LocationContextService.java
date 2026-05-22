@@ -107,7 +107,7 @@ public class LocationContextService {
         .map(d -> (int) Math.round(d))
         .orElseGet(
             () -> {
-              double maxDistanceKm = availableHours * pace.speedKmh / 2.0;
+              double maxDistanceKm = availableHours * pace.getSpeedKmh() / 2.0;
               int fallback = (int) (maxDistanceKm * 1000);
               log.warn("Изохрона недоступна. Fallback-радиус: {} м", fallback);
               return fallback;

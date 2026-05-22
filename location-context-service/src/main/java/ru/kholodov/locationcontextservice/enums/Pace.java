@@ -18,9 +18,16 @@ public enum Pace {
   FAST(6.5);
 
   /** Скорость ходьбы в км/ч для данного темпа. */
-  public final double speedKmh;
+  private final double speedKmh;
 
   Pace(double speedKmh) {
     this.speedKmh = speedKmh;
+  }
+
+  /**
+   * @return скорость ходьбы в км/ч
+   */
+  public double getSpeedKmh() {
+    return speedKmh;
   }
 }
