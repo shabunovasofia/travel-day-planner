@@ -46,7 +46,7 @@ REST API для планирования дня в городе. Пользов�
 
 | Сервис | Используется в | Назначение |
 |--------|---------------|------------|
-| [OpenTripMap API](https://opentripmap.io) | places-service | Поиск мест по координатам и категориям |
+| [OpenTripMap API](https://dev.opentripmap.org/product) | places-service | Поиск мест по координатам и категориям |
 | [LocationIQ API](https://locationiq.com) | location-context-service | Геокодинг адреса в координаты |
 | [OpenRouteService Isochrones](https://openrouteservice.org) | location-context-service | Расчёт радиуса пешеходной доступности |
 | [DeepSeek API](https://api.deepseek.com) | planner-service | AI-фильтрация мест перед построением маршрута |
@@ -107,7 +107,7 @@ ISOCHRONE_API_KEY=ваш_ключ \
 
 | Переменная | Сервис | Обязательная | Описание |
 |-----------|--------|------|----------|
-| `OPENTRIPMAP_API_KEY` | places-service | да | API-ключ OpenTripMap. [Получить ключ](https://opentripmap.io/product) · [Документация](https://opentripmap.io/docs) |
+| `OPENTRIPMAP_API_KEY` | places-service | да | API-ключ OpenTripMap. [Получить ключ](https://dev.opentripmap.org/product) · [Документация](https://dev.opentripmap.org/docs) |
 | `GEOCODING_API_KEY` | location-context-service | да | API-ключ LocationIQ. [Получить ключ](https://locationiq.com/register) · [Документация](https://locationiq.com/docs) |
 | `ISOCHRONE_API_KEY` | location-context-service | да | API-ключ OpenRouteService. [Получить ключ](https://openrouteservice.org/dev/#/signup) · [Документация](https://openrouteservice.org/dev/#/api-docs/v2/isochrones) |
 | `DEEPSEEK_API_KEY` | planner-service | нет | API-ключ DeepSeek для AI-фильтрации. [Получить ключ](https://platform.deepseek.com/api_keys) · [Документация](https://platform.deepseek.com/docs) |
@@ -270,13 +270,13 @@ Swagger UI доступен при запущенном сервисе:
 }
 ```
 
-| Поле | Тип | Обязательное | Описание |
-|------|-----|------|----------|
-| `startTime` | string | да | Время начала прогулки (HH:mm) |
-| `endTime` | string | да | Время конца прогулки (HH:mm) |
-| `places` | array | да | Список мест для включения в маршрут |
-| `startLatitude` | number | нет | Широта стартовой точки — если указана, учитывается время пешего пути (5 км/ч) |
-| `startLongitude` | number | нет | Долгота стартовой точки |
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `startTime` | string | Время начала прогулки (HH:mm) |
+| `endTime` | string | Время конца прогулки (HH:mm) |
+| `places` | array | Список мест для включения в маршрут |
+| `startLatitude` | number | Опционально. Широта стартовой точки — если указана, учитывается время пешего пути (5 км/ч) |
+| `startLongitude` | number | Опционально. Долгота стартовой точки |
 
 **Ответ `200 OK`:**
 ```json
