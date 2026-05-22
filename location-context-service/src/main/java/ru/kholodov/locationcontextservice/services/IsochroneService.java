@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -25,6 +26,9 @@ import ru.kholodov.locationcontextservice.enums.Pace;
  *
  * <p>Транзиентные ошибки (5xx, таймауты сети) обрабатываются Resilience4j. Бизнес-ошибки (4xx) и
  * ошибки разбора ответа не ретраятся — возвращается {@link Optional#empty()}.
+ *
+ * <p>Результаты кэшируются через Spring Cache (Caffeine) по ключу {@code lat,lon:hours:pace} с TTL
+ * 1 час.
  */
 @Slf4j
 @Service
@@ -56,6 +60,7 @@ public class IsochroneService {
    * @param pace темп прогулки
    * @return Optional со средним радиусом в метрах, либо пустой Optional при ошибке
    */
+  @Cacheable(value = "isochrone", key = "#center.lat() + ',' + #center.lon() + ':' + #availableHours + ':' + #pace")
   @Retry(name = RESILIENCE_NAME)
   @CircuitBreaker(name = RESILIENCE_NAME, fallbackMethod = "calculateRadiusFallback")
   public Optional<Double> calculateRadius(Coordinates center, double availableHours, Pace pace) {
