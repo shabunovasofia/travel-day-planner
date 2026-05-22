@@ -2,6 +2,7 @@ package ru.kholodov.locationcontextservice.exception;
 
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -41,7 +42,8 @@ public class GlobalExceptionHandler {
    */
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ApiErrors> handleBadRequest(IllegalArgumentException ex) {
-    return ResponseEntity.status(400).body(ApiErrors.of(CODE_BAD_REQUEST, ex.getMessage()));
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(ApiErrors.of(CODE_BAD_REQUEST, ex.getMessage()));
   }
 
   /**
@@ -57,7 +59,8 @@ public class GlobalExceptionHandler {
         ex.getMostSpecificCause() != null
             ? ex.getMostSpecificCause().getMessage()
             : ex.getMessage();
-    return ResponseEntity.status(400).body(ApiErrors.of(CODE_BAD_REQUEST, message));
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(ApiErrors.of(CODE_BAD_REQUEST, message));
   }
 
   /**
@@ -68,7 +71,8 @@ public class GlobalExceptionHandler {
    */
   @ExceptionHandler(AddressNotFoundException.class)
   public ResponseEntity<ApiErrors> handleAddressNotFound(AddressNotFoundException ex) {
-    return ResponseEntity.status(404).body(ApiErrors.of(CODE_ADDRESS_NOT_FOUND, ex.getMessage()));
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiErrors.of(CODE_ADDRESS_NOT_FOUND, ex.getMessage()));
   }
 
   /**
@@ -90,7 +94,7 @@ public class GlobalExceptionHandler {
     if (errors.isEmpty()) {
       errors = List.of(new ApiErrors.ApiError(CODE_VALIDATION, ex.getMessage()));
     }
-    return ResponseEntity.status(400).body(new ApiErrors(errors));
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiErrors(errors));
   }
 
   /**
@@ -103,7 +107,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(ResourceAccessException.class)
   public ResponseEntity<ApiErrors> handleUpstreamTimeout(ResourceAccessException ex) {
     log.error("Таймаут при вызове upstream-сервиса: {}", ex.getMessage());
-    return ResponseEntity.status(504)
+    return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
         .body(
             ApiErrors.of(
                 CODE_UPSTREAM_UNAVAILABLE, "Сервис временно недоступен. Попробуйте позже."));
@@ -121,7 +125,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiErrors> handleGeneral(Exception ex) {
     log.error("Необработанное исключение: ", ex);
-    return ResponseEntity.status(500)
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(ApiErrors.of(CODE_INTERNAL, "Внутренняя ошибка сервера"));
   }
 }

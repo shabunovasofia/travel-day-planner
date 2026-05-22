@@ -34,6 +34,47 @@ import ru.kholodov.locationcontextservice.services.LocationContextService;
 @Tag(name = "Route Planning", description = "Построение готового маршрута прогулки")
 public class LocationContextController {
 
+  private static final String EX_VALIDATION =
+      """
+      {
+        "errors": [
+          {"code": "VALIDATION_ERROR", "message": "location: Адрес не может быть пустым"},
+          {"code": "VALIDATION_ERROR", "message": "pace: Темп обязателен"}
+        ]
+      }""";
+
+  private static final String EX_BAD_JSON =
+      """
+      {
+        "errors": [
+          {"code": "BAD_REQUEST", "message": "JSON parse error: ..."}
+        ]
+      }""";
+
+  private static final String EX_ADDRESS_NOT_FOUND =
+      """
+      {
+        "errors": [
+          {"code": "ADDRESS_NOT_FOUND", "message": "Не удалось найти координаты для адреса: ..."}
+        ]
+      }""";
+
+  private static final String EX_UPSTREAM_UNAVAILABLE =
+      """
+      {
+        "errors": [
+          {"code": "UPSTREAM_UNAVAILABLE", "message": "Сервис временно недоступен. Попробуйте позже."}
+        ]
+      }""";
+
+  private static final String EX_INTERNAL_ERROR =
+      """
+      {
+        "errors": [
+          {"code": "INTERNAL_ERROR", "message": "Внутренняя ошибка сервера"}
+        ]
+      }""";
+
   private final LocationContextService locationContextService;
 
   /**
@@ -46,7 +87,8 @@ public class LocationContextController {
       summary = "Построить маршрут прогулки",
       description =
           "Геокодирует адрес, находит достопримечательности в радиусе пешей доступности "
-              + "и строит оптимальное расписание посещения с учётом времени в пути и графика работы.")
+              + "и строит оптимальное расписание посещения с учётом времени в пути "
+              + "и графика работы.")
   @ApiResponses({
     @ApiResponse(
         responseCode = "200",
@@ -62,24 +104,11 @@ public class LocationContextController {
                   @ExampleObject(
                       name = "Validation error",
                       summary = "Валидация полей",
-                      value =
-                          """
-                                                    {
-                                                      "errors": [
-                                                        {"code": "VALIDATION_ERROR", "message": "location: Адрес не может быть пустым"},
-                                                        {"code": "VALIDATION_ERROR", "message": "pace: Темп обязателен"}
-                                                      ]
-                                                    }"""),
+                      value = EX_VALIDATION),
                   @ExampleObject(
                       name = "Bad JSON",
                       summary = "Нечитаемый JSON",
-                      value =
-                          """
-                                                    {
-                                                      "errors": [
-                                                        {"code": "BAD_REQUEST", "message": "JSON parse error: Cannot deserialize value of type int from String \\"abc\\""}
-                                                      ]
-                                                    }""")
+                      value = EX_BAD_JSON)
                 })),
     @ApiResponse(
         responseCode = "404",
@@ -88,15 +117,7 @@ public class LocationContextController {
             @Content(
                 schema = @Schema(implementation = ApiErrors.class),
                 examples =
-                    @ExampleObject(
-                        name = "Address not found",
-                        value =
-                            """
-                                            {
-                                              "errors": [
-                                                {"code": "ADDRESS_NOT_FOUND", "message": "Не удалось найти координаты для адреса: ..."}
-                                              ]
-                                            }"""))),
+                    @ExampleObject(name = "Address not found", value = EX_ADDRESS_NOT_FOUND))),
     @ApiResponse(
         responseCode = "504",
         description = "Таймаут или недоступность upstream-сервисов",
@@ -106,29 +127,14 @@ public class LocationContextController {
                 examples =
                     @ExampleObject(
                         name = "Upstream unavailable",
-                        value =
-                            """
-                                            {
-                                              "errors": [
-                                                {"code": "UPSTREAM_UNAVAILABLE", "message": "Сервис временно недоступен. Попробуйте позже."}
-                                              ]
-                                            }"""))),
+                        value = EX_UPSTREAM_UNAVAILABLE))),
     @ApiResponse(
         responseCode = "500",
         description = "Внутренняя ошибка сервера",
         content =
             @Content(
                 schema = @Schema(implementation = ApiErrors.class),
-                examples =
-                    @ExampleObject(
-                        name = "Internal error",
-                        value =
-                            """
-                                            {
-                                              "errors": [
-                                                {"code": "INTERNAL_ERROR", "message": "Внутренняя ошибка сервера"}
-                                              ]
-                                            }""")))
+                examples = @ExampleObject(name = "Internal error", value = EX_INTERNAL_ERROR)))
   })
   @PostMapping("/build")
   public PlanBuildResponse.PlanData buildRoute(@Valid @RequestBody LocationContextRequest request) {

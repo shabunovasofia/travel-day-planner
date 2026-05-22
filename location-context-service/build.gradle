@@ -13,6 +13,7 @@ description = 'location-context-service'
 checkstyle {
     toolVersion = '10.12.4'
     configFile = file("${projectDir}/checkstyle.xml")
+    maxWarnings = 0
 }
 
 spotless {
